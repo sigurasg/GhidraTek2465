@@ -126,25 +126,33 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		program.getSymbolTable();
 
 		try {
-			// TODO(siggi): this is the 2465A, early 2465B version.
-			// Create the RAM blocks.
-			MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000), as.getAddress(0x8000), 0x0800, false);
-			blk.setPermissions(true, true, true);
+			// Only add the fixed blocks the first time invoked.
+			if (memory.getBlock("RAM LO") == null) {
+				// TODO(siggi): this is the 2465A, early 2465B version.
+				// Create the RAM blocks.
+				MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000), as.getAddress(0x8000), 0x0800, false);
+				blk.setPermissions(true, true, true);
 
-			blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
-			blk.setPermissions(true, true, false);
-			blk.setVolatile(true);
-			
-			blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000, false);
-			blk.setPermissions(true, true, true);
+				blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
+				blk.setPermissions(true, true, false);
+				blk.setVolatile(true);
+		
+				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000, false);
+				blk.setPermissions(true, true, true);
 
-			blk = memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
-			blk.setPermissions(true, true, true);
+				blk = memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
+				blk.setPermissions(true, true, true);	
+			}
 			
 			// Load the ROM pages.
 			long length_remaining = provider.length();
 			long page_index = 0;
 			int page = 0;
+
+			// Find the next page number.
+			while (memory.getBlock("ROM_%d".formatted(page)) != null)
+				++page;
+			
 			while (length_remaining > 0) {
 				ROMHeader header = new ROMHeader(provider, page_index);
 				if (!header.IsValid())
@@ -162,7 +170,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				
 				// Offset data and length with respect to the load address.				
 				InputStream data = provider.getInputStream(page_index + load_addr - 0x8000);
-				blk = memory.createInitializedBlock("ROM_%d".formatted(page++), addr, data, 0x10000 - load_addr, monitor, true);
+				MemoryBlock blk = memory.createInitializedBlock("ROM_%d".formatted(page++), addr, data, 0x10000 - load_addr, monitor, true);
 				blk.setPermissions(true, false, true);
 				
 				length_remaining -= 0x8000;
