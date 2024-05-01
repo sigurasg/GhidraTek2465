@@ -4,9 +4,9 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,9 +15,13 @@
  */
 package tek2465;
 
+import static ghidra.program.model.data.DataUtilities.createData;
+
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.BinaryReader;
@@ -26,21 +30,23 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.store.LockException;
 import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
-import ghidra.program.model.address.AddressOutOfBoundsException;
-import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.ByteDataType;
+import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataTypeManager;
+import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.data.Pointer16DataType;
+import ghidra.program.model.data.Structure;
+import ghidra.program.model.data.StructureDataType;
+import ghidra.program.model.data.WordDataType;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
-import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
-import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
-import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -52,7 +58,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 			// Read the ROM header.
 			BinaryReader reader = new BinaryReader(provider, false);
 			reader.setPointerIndex(index);
-			
+
 			checksum = reader.readNextUnsignedShort();
 			part_number = reader.readNextUnsignedShort();
 			version = reader.readNextUnsignedByte();
@@ -66,12 +72,14 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		}
 
 		boolean IsValid() {
-			if ((version ^ version_compl) != 0xFF)
+			if ((version ^ version_compl) != 0xFF) {
 				return false;
-		
-			if (zero != 0 && effeff != 0xFF)
+			}
+
+			if (zero != 0 && effeff != 0xFF) {
 				return false;
-			
+			}
+
 			// TODO(siggi): Check CRC, load addresses, etc.
 			return true;
 		}
@@ -88,11 +96,31 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		int zero;
 		int effeff;
 	}
-	
+
+	private static final CategoryPath PATH = new CategoryPath(CategoryPath.ROOT, "2465");
+	public static final Pointer16DataType ptr = Pointer16DataType.dataType;
+	public static final ByteDataType u8 = ByteDataType.dataType;
+	public static final WordDataType u16 = WordDataType.dataType;
+	public static final Structure ROM_HEADER;
+
+	static {
+		ROM_HEADER = new StructureDataType(PATH, "ROMHeader", 0);
+		ROM_HEADER.add(u16, "checksum", null);
+		ROM_HEADER.add(u16, "part_number", null);
+		ROM_HEADER.add(u8, "version", null);
+		ROM_HEADER.add(u8, "version_compl", null);
+		ROM_HEADER.add(u16, "load_addr", null);
+		ROM_HEADER.add(u8, "unused", null);
+		ROM_HEADER.add(u16, "rom_end", null);
+		ROM_HEADER.add(u16, "next_rom", null);
+		ROM_HEADER.add(u8, "zero", null);
+		ROM_HEADER.add(u8, "effeff", null);
+	}
+
 	@Override
 	public String getName() {
 
-		// TODO(siggi): Figure this out. 
+		// TODO(siggi): Figure this out.
 		// This name must match the name of the loader in the .opinion files.
 
 		return "Tek2465 loader";
@@ -111,28 +139,34 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 			LoadSpec spec = new LoadSpec(this, 0x8000, new LanguageCompilerSpecPair("MC6800:BE:16:default", "default"), true);
 			loadSpecs.add(spec);
 		}
-		
+
 		return loadSpecs;
 	}
 
 	private boolean HasROMHeaderAndCRC(ByteProvider provider) throws IOException {
 		ROMHeader header = new ROMHeader(provider, 0);
-		if (header.IsValid())
+		if (header.IsValid()) {
 			return true;
-		
+		}
+
 		// Secondary ROMs may not have a header at the start.
 		header = new ROMHeader(provider, 0x2000);
 		return header.IsValid();
+	}
+
+	private void addDataTypes(DataTypeManager manager) {
+        var c = manager.createCategory(PATH);
+        c.addDataType(ROM_HEADER, null);
 	}
 
 	@Override
 	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			Program program, TaskMonitor monitor, MessageLog log)
 			throws CancelledException, IOException {
+		addDataTypes(program.getDataTypeManager());
+
 		var as = program.getAddressFactory().getDefaultAddressSpace();
 		Memory memory = program.getMemory();
-		
-		program.getSymbolTable();
 
 		try {
 			// Only add the fixed blocks the first time invoked.
@@ -145,22 +179,23 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
 				blk.setPermissions(true, true, false);
 				blk.setVolatile(true);
-		
+
 				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000, false);
 				blk.setPermissions(true, true, true);
 
 				blk = memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
-				blk.setPermissions(true, true, true);	
+				blk.setPermissions(true, true, true);
 			}
-			
+
 			// Load the ROM pages.
 			long length_remaining = provider.length();
 			long page_index = 0;
 			int page = 0;
 
 			// Find the next page number.
-			while (memory.getBlock("ROM_%d".formatted(page)) != null)
+			while (memory.getBlock("ROM_%d".formatted(page)) != null) {
 				++page;
+			}
 
 			FlatProgramAPI flatAPI = new FlatProgramAPI(program, monitor);
 			while (length_remaining > 0) {
@@ -169,31 +204,35 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 					// Check for a header at the supposed load address.
 					header = new ROMHeader(provider, page_index + 0x2000);
 				}
-				if (!header.IsValid())
+				if (!header.IsValid()) {
 					throw new CancelledException("ROM header invalid.");
-				
+				}
+
 				// Find the load address for this page.
 				int load_addr = header.load_addr & 0xFF00;
 				Address addr = as.getAddress(header.load_addr & 0xFF00);
 				if (load_addr != 0x8000) {
 					// Check that there's a valid ROM header at the load address.
 					header = new ROMHeader(provider, page_index + load_addr - 0x8000);
-					if (!header.IsValid())
+					if (!header.IsValid()) {
 						throw new CancelledException("Load address ROM header invalid");
+					}
 				}
-				
-				// Offset data and length with respect to the load address.				
+
+				// Offset data and length with respect to the load address.
 				InputStream data = provider.getInputStream(page_index + load_addr - 0x8000);
 				MemoryBlock blk = memory.createInitializedBlock("ROM_%d".formatted(page++), addr, data, 0x10000 - load_addr, monitor, true);
 				blk.setPermissions(true, false, true);
-				
+
+				createData(program, blk.getStart(), ROM_HEADER, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+
 				length_remaining -= 0x8000;
 				page_index += 0x8000;
 
-				ProcessVector(program, blk, 0xFFF8, "IRQ");
-				ProcessVector(program, blk, 0xFFFA, "SWI");
-				ProcessVector(program, blk, 0xFFFC, "NMI");
 				ProcessVector(program, blk, 0xFFFE, "RST");
+				ProcessVector(program, blk, 0xFFFC, "NMI");
+				ProcessVector(program, blk, 0xFFFA, "SWI");
+				ProcessVector(program, blk, 0xFFF8, "IRQ");
 			}
 		} catch (Exception e) {
 		    log.appendException(e);
@@ -204,10 +243,11 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 	private void ProcessVector(Program program, MemoryBlock blk, int address, String name) throws Exception {
 		AddressSpace ovl = blk.getAddressRange().getAddressSpace();
 		Address addr = ovl.getAddress(address);
+		createData(program, addr, ptr, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.ANALYSIS);
 		markAsFunction(program, name + "_" + blk.getName(), ovl.getAddress(program.getMemory().getShort(addr)));
 	}
-	
+
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean isLoadIntoProgram) {

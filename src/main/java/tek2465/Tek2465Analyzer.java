@@ -30,7 +30,6 @@ import ghidra.util.task.TaskMonitor;
  * TODO: Provide class-level documentation that describes what this analyzer does.
  */
 public class Tek2465Analyzer extends AbstractAnalyzer {
-
 	public Tek2465Analyzer() {
 
 		// TODO: Name the analyzer and give it a description.
