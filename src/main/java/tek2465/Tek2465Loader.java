@@ -27,22 +27,68 @@ import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.store.LockException;
+import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.address.AddressOverflowException;
+import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.mem.MemoryConflictException;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
  * TODO: Provide class-level documentation that describes what this loader does.
  */
 public class Tek2465Loader extends AbstractProgramWrapperLoader {
+	private class ROMHeader {
+		ROMHeader(ByteProvider provider, long index) throws IOException {
+			// Read the ROM header.
+			BinaryReader reader = new BinaryReader(provider, false);
+			reader.setPointerIndex(index);
+			
+			checksum = reader.readNextUnsignedShort();
+			part_number = reader.readNextUnsignedShort();
+			version = reader.readNextUnsignedByte();
+			version_compl = reader.readNextUnsignedByte();
+			load_addr = reader.readNextUnsignedShort();
+			unused1 = reader.readNextByte();
+			rom_end = reader.readNextUnsignedShort();
+			next_rom = reader.readNextUnsignedShort();
+			zero = reader.readNextUnsignedByte();
+			effeff = reader.readNextUnsignedByte();
+		}
 
+		boolean IsValid() {
+			if ((version ^ version_compl) != 0xFF)
+				return false;
+		
+			if (zero != 0 && effeff != 0xFF)
+				return false;
+			
+			// TODO(siggi): Check CRC, load addresses, etc.
+			return true;
+		}
+
+		// ROM header fields.
+		int checksum;
+		int part_number;
+		int version;
+		int version_compl;
+		int load_addr;
+		byte unused1;
+		int rom_end;
+		int next_rom;
+		int zero;
+		int effeff;
+	}
+	
 	@Override
 	public String getName() {
 
@@ -69,50 +115,13 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		return loadSpecs;
 	}
 
-	class ROMHeader {
-		ROMHeader(ByteProvider provider, long index) throws IOException {
-			// Read the ROM header.
-			BinaryReader reader = new BinaryReader(provider, false);
-			reader.setPointerIndex(index);
-			
-			checksum = reader.readNextUnsignedShort();
-			unknown = reader.readNextUnsignedShort();
-			sig = reader.readNextUnsignedByte();
-			sig_compl = reader.readNextUnsignedByte();
-			load_addr = reader.readNextUnsignedShort();
-			unused1 = reader.readNextByte();
-			rom_end = reader.readNextUnsignedShort();
-			next_rom = reader.readNextUnsignedShort();
-			zero = reader.readNextUnsignedByte();
-			effeff = reader.readNextUnsignedByte();
-		}
-
-		boolean IsValid() {
-			if ((sig ^ sig_compl) != 0xFF)
-				return false;
-		
-			if (zero != 0 && effeff != 0xFF)
-				return false;
-			
-			// TODO(siggi): Check CRC, load addresses, etc.
-			return true;
-		}
-
-		// ROM header fields.
-		int checksum;
-		int unknown;
-		int sig;
-		int sig_compl;
-		int load_addr;
-		byte unused1;
-		int rom_end;
-		int next_rom;
-		int zero;
-		int effeff;
-	}
-	
 	private boolean HasROMHeaderAndCRC(ByteProvider provider) throws IOException {
 		ROMHeader header = new ROMHeader(provider, 0);
+		if (header.IsValid())
+			return true;
+		
+		// Secondary ROMs may not have a header at the start.
+		header = new ROMHeader(provider, 0x2000);
 		return header.IsValid();
 	}
 
@@ -152,9 +161,14 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 			// Find the next page number.
 			while (memory.getBlock("ROM_%d".formatted(page)) != null)
 				++page;
-			
+
+			FlatProgramAPI flatAPI = new FlatProgramAPI(program, monitor);
 			while (length_remaining > 0) {
 				ROMHeader header = new ROMHeader(provider, page_index);
+				if (!header.IsValid()) {
+					// Check for a header at the supposed load address.
+					header = new ROMHeader(provider, page_index + 0x2000);
+				}
 				if (!header.IsValid())
 					throw new CancelledException("ROM header invalid.");
 				
@@ -175,13 +189,25 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				
 				length_remaining -= 0x8000;
 				page_index += 0x8000;
+
+				ProcessVector(program, blk, 0xFFF8, "IRQ");
+				ProcessVector(program, blk, 0xFFFA, "SWI");
+				ProcessVector(program, blk, 0xFFFC, "NMI");
+				ProcessVector(program, blk, 0xFFFE, "RST");
 			}
-		} catch (LockException | IllegalArgumentException | AddressOverflowException | AddressOutOfBoundsException | MemoryConflictException e) {
+		} catch (Exception e) {
 		    log.appendException(e);
 		    throw new CancelledException("Loading failed: " + e.getMessage());
 		}
 	}
 
+	private void ProcessVector(Program program, MemoryBlock blk, int address, String name) throws Exception {
+		AddressSpace ovl = blk.getAddressRange().getAddressSpace();
+		Address addr = ovl.getAddress(address);
+		program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.ANALYSIS);
+		markAsFunction(program, name + "_" + blk.getName(), ovl.getAddress(program.getMemory().getShort(addr)));
+	}
+	
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
 			DomainObject domainObject, boolean isLoadIntoProgram) {
