@@ -30,13 +30,18 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.framework.model.DomainObject;
-import ghidra.program.flatapi.FlatProgramAPI;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
+import ghidra.program.model.data.Array;
+import ghidra.program.model.data.ArrayDataType;
 import ghidra.program.model.data.ByteDataType;
 import ghidra.program.model.data.CategoryPath;
+import ghidra.program.model.data.DataType;
 import ghidra.program.model.data.DataTypeManager;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
+import ghidra.program.model.data.Enum;
+import ghidra.program.model.data.EnumDataType;
+import ghidra.program.model.data.InvalidDataTypeException;
 import ghidra.program.model.data.Pointer16DataType;
 import ghidra.program.model.data.Structure;
 import ghidra.program.model.data.StructureDataType;
@@ -97,11 +102,13 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		int effeff;
 	}
 
-	private static final CategoryPath PATH = new CategoryPath(CategoryPath.ROOT, "2465");
+	private static final CategoryPath PATH = new CategoryPath(CategoryPath.ROOT, "2465a");
 	public static final Pointer16DataType ptr = Pointer16DataType.dataType;
 	public static final ByteDataType u8 = ByteDataType.dataType;
 	public static final WordDataType u16 = WordDataType.dataType;
 	public static final Structure ROM_HEADER;
+	public static final Structure IO_REGION;
+	public static final Enum PORT_1;
 
 	static {
 		ROM_HEADER = new StructureDataType(PATH, "ROMHeader", 0);
@@ -115,15 +122,64 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		ROM_HEADER.add(u16, "next_rom", null);
 		ROM_HEADER.add(u8, "zero", null);
 		ROM_HEADER.add(u8, "effeff", null);
+
+		IO_REGION = new StructureDataType(PATH, "io", 0);
+		IO_REGION.add(array(u8, 64), "dmux2_off", null);
+		IO_REGION.add(array(u8, 63), "dac_msb", null);
+		IO_REGION.add(u16, "dac_full", null);
+		IO_REGION.add(array(u8, 63), "dac_lsb", null);
+		// Create a bit field for port 1.
+		StructureDataType port_1 = new StructureDataType("p1", 0);
+		port_1.setPackingEnabled(true);
+		try {
+			port_1.addBitField(u8, 3, "mux_sel", null);
+			port_1.addBitField(u8, 1, "rom_select", null);
+			port_1.addBitField(u8, 1, "page_select", null);
+			port_1.addBitField(u8, 1, "pwr_down", null);
+		} catch (InvalidDataTypeException e) {
+			e.printStackTrace();
+		}
+
+		IO_REGION.add(array(port_1, 64), "port_1_clk", null);
+		IO_REGION.add(array(u8, 64), "ros_1_clk", null);
+		IO_REGION.add(array(u8, 64), "ros_2_clk", null);
+		IO_REGION.add(array(u8, 64), "port_2_clk", null);
+
+		Structure fine = new StructureDataType("f", 0);
+		fine.add(u8, "dmux2_on", null);
+		fine.add(u8, "dmux0_off", null);
+		fine.add(u8, "dmux0_on", null);
+		fine.add(u8, "port_3_in", null);
+		fine.add(u8, "dmux1_off", null);
+		fine.add(u8, "dmux1_on", null);
+		fine.add(u8, "led_clk", null);
+		fine.add(u8, "disp_seq_clk", null);
+		fine.add(u8, "atn_clk", null);
+		fine.add(u8, "ch_2_pa_clk", null);
+		fine.add(u8, "ch_1_pa_clk", null);
+		fine.add(u8, "b_swp_clk", null);
+		fine.add(u8, "a_swp_clk", null);
+		fine.add(u8, "b_trig_clk", null);
+		fine.add(u8, "a_trig_clk", null);
+		fine.add(u8, "trig_stat_strb", null);
+		IO_REGION.add(array(fine, 4), "f", null);
+
+		PORT_1 = new EnumDataType(PATH, "Port1", 1);
+		PORT_1.add("MUX_MASK", 0x7);
+		PORT_1.add("ROM_SELECT", 0x8);
+		PORT_1.add("PAGE_SELECT", 0x10);
+		PORT_1.add("PWR_DOWN", 0x20);
 	}
+
+    static Array array(DataType d, int size) {
+        return new ArrayDataType(d, size, -1);
+    }
 
 	@Override
 	public String getName() {
-
-		// TODO(siggi): Figure this out.
-		// This name must match the name of the loader in the .opinion files.
-
-		return "Tek2465 loader";
+		// TODO(siggi): Analyze the ROMs and discern between 2465/A/B ROMs, or
+		//    else take an argument.
+		return "Tek2465A ROM";
 	}
 
 	@Override
@@ -157,6 +213,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 	private void addDataTypes(DataTypeManager manager) {
         var c = manager.createCategory(PATH);
         c.addDataType(ROM_HEADER, null);
+        c.addDataType(IO_REGION, null);
+        c.addDataType(PORT_1, null);
 	}
 
 	@Override
@@ -179,6 +237,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
 				blk.setPermissions(true, true, false);
 				blk.setVolatile(true);
+				createData(program,  blk.getStart(), array(IO_REGION, 4), -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+				program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
 
 				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000, false);
 				blk.setPermissions(true, true, true);
@@ -197,7 +257,6 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				++page;
 			}
 
-			FlatProgramAPI flatAPI = new FlatProgramAPI(program, monitor);
 			while (length_remaining > 0) {
 				ROMHeader header = new ROMHeader(provider, page_index);
 				if (!header.IsValid()) {
