@@ -24,7 +24,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: distribution
-          path: build/distributions/*_GhidraBoy.zip
+          path: build/distributions/*_GhidraTek2465.zip
           if-no-files-found: 'error'
   release:
     if: github.ref_type == 'tag'
@@ -43,4 +43,4 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create --verify-tag --generate-notes --draft "${{ github.ref_name }}"
-          gh release upload "${{ github.ref_name }}" *_GhidraBoy.zip
+          gh release upload "${{ github.ref_name }}" *_GhidraTek2465.zip
