@@ -1,4 +1,4 @@
-// Copyright 2022-2024 Sigurdur Asgeirsson <siggi@sort.is>
+// Copyright 2024 Sigurdur Asgeirsson <siggi@sort.is>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,49 +56,6 @@ import ghidra.util.task.TaskMonitor;
  * TODO: Provide class-level documentation that describes what this loader does.
  */
 public class Tek2465Loader extends AbstractProgramWrapperLoader {
-	private class ROMHeader {
-		ROMHeader(ByteProvider provider, long index) throws IOException {
-			// Read the ROM header.
-			BinaryReader reader = new BinaryReader(provider, false);
-			reader.setPointerIndex(index);
-
-			checksum = reader.readNextUnsignedShort();
-			part_number = reader.readNextUnsignedShort();
-			version = reader.readNextUnsignedByte();
-			version_compl = reader.readNextUnsignedByte();
-			load_addr = reader.readNextUnsignedShort();
-			unused1 = reader.readNextByte();
-			rom_end = reader.readNextUnsignedShort();
-			next_rom = reader.readNextUnsignedShort();
-			zero = reader.readNextUnsignedByte();
-			effeff = reader.readNextUnsignedByte();
-		}
-
-		boolean IsValid() {
-			if ((version ^ version_compl) != 0xFF) {
-				return false;
-			}
-
-			if (zero != 0 && effeff != 0xFF) {
-				return false;
-			}
-
-			// TODO(siggi): Check CRC, load addresses, etc.
-			return true;
-		}
-
-		// ROM header fields.
-		int checksum;
-		int part_number;
-		int version;
-		int version_compl;
-		int load_addr;
-		byte unused1;
-		int rom_end;
-		int next_rom;
-		int zero;
-		int effeff;
-	}
 
 	private static final CategoryPath PATH = new CategoryPath(CategoryPath.ROOT, "2465a");
 	public static final Pointer16DataType ptr = Pointer16DataType.dataType;
