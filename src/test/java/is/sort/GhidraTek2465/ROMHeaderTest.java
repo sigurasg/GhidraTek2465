@@ -14,32 +14,65 @@
 
 package is.sort.GhidraTek2465;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import java.io.IOException;
+import java.util.HexFormat;
 
 import org.junit.Test;
 
 import ghidra.app.util.bin.ByteArrayProvider;
-import ghidra.app.util.bin.ByteProvider;
 
 public class ROMHeaderTest {
+	static ROMHeader fromString(String str, int offset) throws IOException {
+		return new ROMHeader(
+					new ByteArrayProvider(HexFormat.of().parseHex(str)),
+					offset);
+	}
+
 	@Test
 	public void validHeaderTest() throws IOException {
-		byte header[] = {
-				0x12, 0x23,  			// Checksum.
-				0x33, 0x02,  			// Part number.
-				0x06, ~0x06, 			// Version and complement.
-				(byte)0x80,				// Load address.
-				(byte)0xCC, 0x00,  		// Load address and unknown.
-				(byte)0xff, (byte)0xff, // ROM end.
-				0x00, 0x00,  			// Next ROM.
-				0x00, (byte)0xff   		// Trailer.
-		};
-		ByteProvider provider = new ByteArrayProvider(header);
-		ROMHeader romHeader = new ROMHeader(provider, 0);
+		ROMHeader h = fromString(
+			"1234" +	// Checksum.
+			"3302" +  	// Part number.
+			"06FD" + 	// Version and complement.
+			"80" +		// Load address.
+			"CC00" +  	// Load address and unknown.
+			"FFFF" + 	// ROM end.
+			"0000" +  	// Next ROM.
+			"00FF", 	// Trailer.
+			0);
 
-		assert romHeader.IsValid();
+		assertEquals(h.checksum, 0x1234);
+		assertEquals(h.part_number, 0x3302);
+		assertEquals(h.version, 0x06);
+		assertEquals(h.version_compl, ~0x06);
+		assertEquals(h.load_addr, 0x80);
+		assertEquals(h.rom_end, 0xFFFF);
+		assertEquals(h.next_rom, 0x0000);
+		assertEquals(h.zero_effeff, 0x00FF);
 
-		assert romHeader.getLoadAddress() == 0x8000;
-		assert romHeader.getByteSize() == 0x8000;
+		assertTrue(h.IsValid());
+		assertEquals( h.getLoadAddress(), 0x8000);
+		assertEquals(h.getByteSize(), 0x8000);
+	}
+
+
+	@Test
+	public void invalidHeaderTest() throws IOException {
+		ROMHeader h = fromString(
+			"12343302" +
+			"07FD" + 	// Invalid version complement.
+			"80CC00FFFF000000FF",
+			0);
+		assertFalse(h.IsValid());
+
+		h = fromString(
+				"1234330207FD80CC00FFFF0000" +
+				"00FE",  // Invalid signature.
+				0);
+		assertFalse(h.IsValid());
 	}
 }

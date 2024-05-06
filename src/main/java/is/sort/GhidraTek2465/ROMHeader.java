@@ -36,15 +36,9 @@ public class ROMHeader {
 	}
 
 	boolean IsValid() {
-		if ((version ^ version_compl) != 0xFF) {
+		if ((version ^ version_compl) != 0xFF || zero_effeff != 0x00FF) {
 			return false;
 		}
-
-		if (zero_effeff != 0xFF) {
-			return false;
-		}
-
-		// TODO(siggi): Check CRC, load addresses, etc.
 		return true;
 	}
 

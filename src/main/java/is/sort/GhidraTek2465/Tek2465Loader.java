@@ -155,13 +155,18 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 
 	private boolean HasROMHeaderAndCRC(ByteProvider provider) throws IOException {
 		ROMHeader header = new ROMHeader(provider, 0);
-		if (header.IsValid()) {
-			return true;
+		int offset = 0;
+		if (!header.IsValid()) {
+			// Secondary ROMs may not have a header at the start.
+			header = new ROMHeader(provider, 0x2000);
+			offset = 0x2000;
 		}
+		if (!header.IsValid()) {
+			return false;
+		}
+		int checksum = ROMUtils.ChecksumRange(provider.getInputStream(0x0002), header.getByteSize() - 2);
 
-		// Secondary ROMs may not have a header at the start.
-		header = new ROMHeader(provider, 0x2000);
-		return header.IsValid();
+		return header.checksum == checksum;
 	}
 
 	private void addDataTypes(DataTypeManager manager) {
