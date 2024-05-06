@@ -37,7 +37,7 @@ public class ROMHeaderTest {
 		ROMHeader h = fromString(
 			"1234" +	// Checksum.
 			"3302" +  	// Part number.
-			"06FD" + 	// Version and complement.
+			"06F9" + 	// Version and complement.
 			"80" +		// Load address.
 			"CC00" +  	// Load address and unknown.
 			"FFFF" + 	// ROM end.
@@ -48,7 +48,7 @@ public class ROMHeaderTest {
 		assertEquals(h.checksum, 0x1234);
 		assertEquals(h.part_number, 0x3302);
 		assertEquals(h.version, 0x06);
-		assertEquals(h.version_compl, ~0x06);
+		assertEquals(h.version_compl, 0xF9);
 		assertEquals(h.load_addr, 0x80);
 		assertEquals(h.rom_end, 0xFFFF);
 		assertEquals(h.next_rom, 0x0000);
@@ -58,7 +58,6 @@ public class ROMHeaderTest {
 		assertEquals( h.getLoadAddress(), 0x8000);
 		assertEquals(h.getByteSize(), 0x8000);
 	}
-
 
 	@Test
 	public void invalidHeaderTest() throws IOException {
@@ -70,9 +69,9 @@ public class ROMHeaderTest {
 		assertFalse(h.IsValid());
 
 		h = fromString(
-				"1234330207FD80CC00FFFF0000" +
-				"00FE",  // Invalid signature.
-				0);
+			"1234330207F980CC00FFFF0000" +
+			"00FE",  // Invalid signature.
+			0);
 		assertFalse(h.IsValid());
 	}
 }
