@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.List;
 
 import ghidra.app.util.Option;
-import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
@@ -71,8 +70,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		ROM_HEADER.add(u16, "part_number", null);
 		ROM_HEADER.add(u8, "version", null);
 		ROM_HEADER.add(u8, "version_compl", null);
-		ROM_HEADER.add(u16, "load_addr", null);
-		ROM_HEADER.add(u8, "unused", null);
+		ROM_HEADER.add(u8, "load_addr", null);
+		ROM_HEADER.add(u16, "tail_checksum", null);
 		ROM_HEADER.add(u16, "rom_end", null);
 		ROM_HEADER.add(u16, "next_rom", null);
 		ROM_HEADER.add(u8, "zero", null);
@@ -223,8 +222,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				}
 
 				// Find the load address for this page.
-				int load_addr = header.load_addr & 0xFF00;
-				Address addr = as.getAddress(header.load_addr & 0xFF00);
+				int load_addr = header.getLoadAddress();
+				Address addr = as.getAddress(load_addr);
 				if (load_addr != 0x8000) {
 					// Check that there's a valid ROM header at the load address.
 					header = new ROMHeader(provider, page_index + load_addr - 0x8000);

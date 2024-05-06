@@ -25,18 +25,21 @@ public class ROMHeaderTest {
 	@Test
 	public void validHeaderTest() throws IOException {
 		byte header[] = {
-				0x12, 0x23,  // Checksum.
-				0x33, 0x02,  // Part number.
-				0x06, ~0x06, // Version and complement,
-				(byte)0x80, (byte)0xCC,  // Load address and unknown.
-				0x00,        // Unused?
-				(byte)0xff, (byte)0xff,  // ROM end.
-				0x00, 0x00,  // Next ROM.
-				0x00, (byte)0xff   // Trailer.
+				0x12, 0x23,  			// Checksum.
+				0x33, 0x02,  			// Part number.
+				0x06, ~0x06, 			// Version and complement.
+				(byte)0x80,				// Load address.
+				(byte)0xCC, 0x00,  		// Load address and unknown.
+				(byte)0xff, (byte)0xff, // ROM end.
+				0x00, 0x00,  			// Next ROM.
+				0x00, (byte)0xff   		// Trailer.
 		};
 		ByteProvider provider = new ByteArrayProvider(header);
 		ROMHeader romHeader = new ROMHeader(provider, 0);
 
 		assert romHeader.IsValid();
+
+		assert romHeader.getLoadAddress() == 0x8000;
+		assert romHeader.getByteSize() == 0x8000;
 	}
 }

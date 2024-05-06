@@ -13,10 +13,10 @@
 // limitations under the License.
 package is.sort.GhidraTek2465;
 
+import java.io.IOException;
+
 import ghidra.app.util.bin.BinaryReader;
 import ghidra.app.util.bin.ByteProvider;
-
-import java.io.IOException;
 
 public class ROMHeader {
 	ROMHeader(ByteProvider provider, long index) throws IOException {
@@ -28,12 +28,11 @@ public class ROMHeader {
 		part_number = reader.readNextUnsignedShort();
 		version = reader.readNextUnsignedByte();
 		version_compl = reader.readNextUnsignedByte();
-		load_addr = reader.readNextUnsignedShort();
-		unused1 = reader.readNextByte();
+		load_addr = reader.readNextUnsignedByte();
+		tail_checksum = reader.readNextUnsignedShort();
 		rom_end = reader.readNextUnsignedShort();
 		next_rom = reader.readNextUnsignedShort();
-		zero = reader.readNextUnsignedByte();
-		effeff = reader.readNextUnsignedByte();
+		zero_effeff = reader.readNextUnsignedShort();
 	}
 
 	boolean IsValid() {
@@ -41,7 +40,7 @@ public class ROMHeader {
 			return false;
 		}
 
-		if (zero != 0 && effeff != 0xFF) {
+		if (zero_effeff != 0xFF) {
 			return false;
 		}
 
@@ -49,15 +48,31 @@ public class ROMHeader {
 		return true;
 	}
 
+	int getLoadAddress() {
+		return load_addr << 8;
+	}
+
+	int getByteSize() {
+		return rom_end + 1 - getLoadAddress();
+	}
+
 	// ROM header fields.
-	int checksum;
-	int part_number;
-	int version;
-	int version_compl;
-	int load_addr;
-	byte unused1;
-	int rom_end;
-	int next_rom;
-	int zero;
-	int effeff;
+	// Checksum over the bytes after this field.
+	final int checksum;
+	// The part number encoded in hex, e.g. 0x3302 for 3302.
+	final int part_number;
+	// The firmware version.
+	final int version;
+	// Complement of the previous field.
+	final int version_compl;
+	// The upper byte of the ROM load address.
+	final int load_addr;
+	// Checksum over the bytes after this field.
+	final int tail_checksum;
+	// The last byte of this ROM.
+	final int rom_end;
+	// The address of the next ROM, if any.
+	final int next_rom;
+	// Fixed value - maybe a signature?
+	final int zero_effeff;
 }
