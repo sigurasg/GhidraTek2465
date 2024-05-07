@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package is.sort.GhidraTek2465;
+package is.sort.ghidratek2465;
 
 import static ghidra.program.model.data.DataUtilities.createData;
 
@@ -164,7 +164,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		if (!header.isValid()) {
 			return false;
 		}
-		int checksum = ROMUtils.checksumRange(provider.getInputStream(0x0002), header.getByteSize() - 2);
+		int checksum = ROMUtils.checksumRange(provider.getInputStream(offset + 0x0002), header.getByteSize() - 2);
 
 		return header.checksum == checksum;
 	}

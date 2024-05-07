@@ -1,4 +1,4 @@
-package is.sort.GhidraTek2465;
+package is.sort.ghidratek2465;
 
 import java.io.IOException;
 import java.io.InputStream;

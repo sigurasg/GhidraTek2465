@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package is.sort.GhidraTek2465;
+package is.sort.ghidratek2465;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
