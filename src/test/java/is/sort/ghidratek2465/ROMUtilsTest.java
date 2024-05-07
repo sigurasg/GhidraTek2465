@@ -35,4 +35,12 @@ public class ROMUtilsTest {
 		assertEquals(ROMUtils.scopeKindFromPartNumber(5876), ROMUtils.ScopeKind.TEK2465B_LATE);
 		assertEquals(ROMUtils.scopeKindFromPartNumber(5877), ROMUtils.ScopeKind.TEK2465B_LATE);
 	}
+
+	@Test
+	public void getScopeKindNameTest() {
+		assertEquals("Tek2465", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465));
+		assertEquals("Tek2465A", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465A));
+		assertEquals("Tek2465B", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B));
+		assertEquals("Tek2465B SN>B050000", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B_LATE));
+	}
 }

@@ -64,7 +64,7 @@ public class ROMUtils {
 		case TEK2465B:
 			return "Tek2465B";
 		case TEK2465B_LATE:
-			return "Tek2465B SN>B05000";
+			return "Tek2465B SN>B050000";
 		default:
 			return "Unknown";
 		}
