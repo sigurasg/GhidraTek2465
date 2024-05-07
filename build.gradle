@@ -29,8 +29,6 @@
 // application.gradle.version property in <GHIDRA_INSTALL_DIR>/Ghidra/application.properties
 // for the correction version of Gradle to use for the Ghidra installation you specify.
 
-apply plugin: 'eclipse'
-
 //----------------------START "DO NOT MODIFY" SECTION------------------------------
 def ghidraInstallDir
 
