@@ -35,7 +35,7 @@ public class ROMHeader {
 		zero_effeff = reader.readNextUnsignedShort();
 	}
 
-	boolean IsValid() {
+	boolean isValid() {
 		if ((version ^ version_compl) != 0xFF || zero_effeff != 0x00FF) {
 			return false;
 		}

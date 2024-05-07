@@ -156,15 +156,15 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 	private boolean HasROMHeaderAndCRC(ByteProvider provider) throws IOException {
 		ROMHeader header = new ROMHeader(provider, 0);
 		int offset = 0;
-		if (!header.IsValid()) {
+		if (!header.isValid()) {
 			// Secondary ROMs may not have a header at the start.
 			header = new ROMHeader(provider, 0x2000);
 			offset = 0x2000;
 		}
-		if (!header.IsValid()) {
+		if (!header.isValid()) {
 			return false;
 		}
-		int checksum = ROMUtils.ChecksumRange(provider.getInputStream(0x0002), header.getByteSize() - 2);
+		int checksum = ROMUtils.checksumRange(provider.getInputStream(0x0002), header.getByteSize() - 2);
 
 		return header.checksum == checksum;
 	}
@@ -218,11 +218,11 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 
 			while (length_remaining > 0) {
 				ROMHeader header = new ROMHeader(provider, page_index);
-				if (!header.IsValid()) {
+				if (!header.isValid()) {
 					// Check for a header at the supposed load address.
 					header = new ROMHeader(provider, page_index + 0x2000);
 				}
-				if (!header.IsValid()) {
+				if (!header.isValid()) {
 					throw new CancelledException("ROM header invalid.");
 				}
 
@@ -232,7 +232,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				if (load_addr != 0x8000) {
 					// Check that there's a valid ROM header at the load address.
 					header = new ROMHeader(provider, page_index + load_addr - 0x8000);
-					if (!header.IsValid()) {
+					if (!header.isValid()) {
 						throw new CancelledException("Load address ROM header invalid");
 					}
 				}

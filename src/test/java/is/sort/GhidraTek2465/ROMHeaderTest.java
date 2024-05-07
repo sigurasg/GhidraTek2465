@@ -54,7 +54,7 @@ public class ROMHeaderTest {
 		assertEquals(h.next_rom, 0x0000);
 		assertEquals(h.zero_effeff, 0x00FF);
 
-		assertTrue(h.IsValid());
+		assertTrue(h.isValid());
 		assertEquals( h.getLoadAddress(), 0x8000);
 		assertEquals(h.getByteSize(), 0x8000);
 	}
@@ -66,12 +66,12 @@ public class ROMHeaderTest {
 			"07FD" + 	// Invalid version complement.
 			"80CC00FFFF000000FF",
 			0);
-		assertFalse(h.IsValid());
+		assertFalse(h.isValid());
 
 		h = fromString(
 			"1234330207F980CC00FFFF0000" +
 			"00FE",  // Invalid signature.
 			0);
-		assertFalse(h.IsValid());
+		assertFalse(h.isValid());
 	}
 }
