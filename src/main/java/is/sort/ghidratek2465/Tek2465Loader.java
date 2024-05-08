@@ -131,9 +131,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 
 	@Override
 	public String getName() {
-		// TODO(siggi): Analyze the ROMs and discern between 2465/A/B ROMs, or
-		//    else take an argument.
-		return "Tek2465A ROM";
+		return name;
 	}
 
 	@Override
@@ -166,7 +164,12 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		}
 		int checksum = ROMUtils.checksumRange(provider.getInputStream(offset + 0x0002), header.getByteSize() - 2);
 
-		return header.checksum == checksum;
+		if (header.checksum != checksum) {
+			return false;
+		}
+
+		name = ROMUtils.getScopeKindName(ROMUtils.scopeKindFromPartNumber(header.part_number));
+		return true;
 	}
 
 	private void addDataTypes(DataTypeManager manager) {
@@ -285,4 +288,6 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 
 		return super.validateOptions(provider, loadSpec, options, program);
 	}
+
+	private String name = "Tek2465";
 }

@@ -31,22 +31,22 @@ public class ROMUtils {
 	// Find the scope kind from part number.
 	public static ScopeKind scopeKindFromPartNumber(int part_number) {
 		switch (part_number) {
-		case 1625:
-		case 1626:
-		case 1627:
-		case 1628:
+		case 0x1625:
+		case 0x1626:
+		case 0x1627:
+		case 0x1628:
 			return ScopeKind.TEK2465;
 
-		case 3302:
-		case 3303:
+		case 0x3302:
+		case 0x3303:
 			return ScopeKind.TEK2465A;
 
-		case 5370:
-		case 5371:
+		case 0x5370:
+		case 0x5371:
 			return ScopeKind.TEK2465B;
 
-		case 5876:
-		case 5877:
+		case 0x5876:
+		case 0x5877:
 			return ScopeKind.TEK2465B_LATE;
 
 		default:
@@ -72,13 +72,15 @@ public class ROMUtils {
 
 	// Computes the checksum of the next `length` bytes in `str`.
 	static int checksumRange(InputStream str, int length) throws IOException {
-		int checksum = 0;
-		byte data[] = null;
+		byte[] data = new byte[length];
+		if (str.read(data, 0, length) != length) {
+			throw new IOException("Stream too short.");
+		}
 
-		str.read(data, 0, length);
+		int checksum = 0;
 		for (int i = 0; i < data.length; ++i) {
 			checksum <<= 1;
-			checksum += data[i] + (checksum >> 16);
+			checksum += (data[i] & 0xFF) + (checksum >> 16);
 			checksum &= 0xFFFF;
 		}
 

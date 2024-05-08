@@ -21,19 +21,19 @@ import org.junit.Test;
 public class ROMUtilsTest {
 	@Test
 	public void getScopeKindTest() {
-		assertEquals(ROMUtils.scopeKindFromPartNumber(1625), ROMUtils.ScopeKind.TEK2465);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(1626), ROMUtils.ScopeKind.TEK2465);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(1627), ROMUtils.ScopeKind.TEK2465);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(1628), ROMUtils.ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1625), ROMUtils.ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1626), ROMUtils.ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1627), ROMUtils.ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1628), ROMUtils.ScopeKind.TEK2465);
 
-		assertEquals(ROMUtils.scopeKindFromPartNumber(3302), ROMUtils.ScopeKind.TEK2465A);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(3303), ROMUtils.ScopeKind.TEK2465A);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3302), ROMUtils.ScopeKind.TEK2465A);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3303), ROMUtils.ScopeKind.TEK2465A);
 
-		assertEquals(ROMUtils.scopeKindFromPartNumber(5370), ROMUtils.ScopeKind.TEK2465B);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(5371), ROMUtils.ScopeKind.TEK2465B);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5370), ROMUtils.ScopeKind.TEK2465B);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5371), ROMUtils.ScopeKind.TEK2465B);
 
-		assertEquals(ROMUtils.scopeKindFromPartNumber(5876), ROMUtils.ScopeKind.TEK2465B_LATE);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(5877), ROMUtils.ScopeKind.TEK2465B_LATE);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5876), ROMUtils.ScopeKind.TEK2465B_LATE);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5877), ROMUtils.ScopeKind.TEK2465B_LATE);
 	}
 
 	@Test

@@ -56,4 +56,13 @@ dependencies {
 }
 
 // Exclude additional files from the built extension
-// Ex: buildExtension.exclude '.idea/**'
+buildExtension {
+	exclude 'gradle.properties'
+	exclude '.github/**'
+	exclude 'gradle/**'
+}
+
+// And don't ship the tests.
+zipSource {
+	exclude 'src/test/**'
+}
