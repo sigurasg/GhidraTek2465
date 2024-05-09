@@ -16,6 +16,10 @@ package is.sort.ghidratek2465;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+
 import org.junit.Test;
 
 public class ROMUtilsTest {
@@ -42,5 +46,27 @@ public class ROMUtilsTest {
 		assertEquals("Tek2465A", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465A));
 		assertEquals("Tek2465B", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B));
 		assertEquals("Tek2465B SN>B050000", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B_LATE));
+	}
+
+	static private InputStream getBytes() {
+		byte[] data = new byte[1024];
+		for (int i = 0; i < data.length; ++i) {
+			data[i] = (byte)i;
+		}
+		return new ByteArrayInputStream(data);
+	}
+
+	@Test
+	public void checksumFullRangeTest() throws IOException {
+		assertEquals(0xB47F, ROMUtils.checksumRange(getBytes(), 0x400));
+	}
+
+	public void checksumShortRangeTest() throws IOException {
+		assertEquals(0xBCFF, ROMUtils.checksumRange(getBytes(), 0x300));
+	}
+
+	@Test(expected = IOException.class)
+	public void checksumOutOfBounds() throws IOException {
+		ROMUtils.checksumRange(getBytes(), 0x401);
 	}
 }

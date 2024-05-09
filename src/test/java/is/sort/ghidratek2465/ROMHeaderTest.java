@@ -25,6 +25,7 @@ import org.junit.Test;
 
 import ghidra.app.util.bin.ByteArrayProvider;
 
+
 public class ROMHeaderTest {
 	static ROMHeader fromString(String str, int offset) throws IOException {
 		return new ROMHeader(
