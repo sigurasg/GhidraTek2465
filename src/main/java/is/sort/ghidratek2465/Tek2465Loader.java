@@ -162,7 +162,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		if (!header.isValid()) {
 			return false;
 		}
-		int checksum = ROMUtils.checksumRange(provider.getInputStream(offset + 0x0002), header.getByteSize() - 2);
+		int checksum = ROMUtils.checksumRange(provider, 0x0002, header.getByteSize() - 2);
 
 		if (header.checksum != checksum) {
 			return false;
