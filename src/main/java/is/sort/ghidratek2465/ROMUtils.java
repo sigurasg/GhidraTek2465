@@ -14,7 +14,8 @@
 package is.sort.ghidratek2465;
 
 import java.io.IOException;
-import java.io.InputStream;
+
+import ghidra.app.util.bin.ByteProvider;
 
 public class ROMUtils {
 	// TODO(siggi): Search ROMs for valid headers and return their location.
@@ -71,12 +72,8 @@ public class ROMUtils {
 	}
 
 	// Computes the checksum of the next `length` bytes in `str`.
-	static int checksumRange(InputStream str, int length) throws IOException {
-		byte[] data = new byte[length];
-		if (str.read(data, 0, length) != length) {
-			throw new IOException("Stream too short.");
-		}
-
+	static int checksumRange(ByteProvider provider, int offset, int length) throws IOException {
+		byte[] data = provider.readBytes(offset, length);
 		int checksum = 0;
 		for (int i = 0; i < data.length; ++i) {
 			checksum <<= 1;
@@ -85,5 +82,24 @@ public class ROMUtils {
 		}
 
 		return checksum;
+	}
+
+	// Returns true iff @str has a ROM header with a valid checksum.
+	static boolean hasValidHeaderAt(ByteProvider provider, int offset) throws IOException {
+		ROMHeader h = new ROMHeader(provider, offset);
+		if (!h.isValid()) {
+			return false;
+		}
+
+		if (checksumRange(provider, 0x0002, h.getByteSize() - 0x0002) != h.checksum) {
+			return false;
+		}
+
+		if (h.tail_checksum != 0 &&
+				checksumRange(provider,  0x0009, h.getByteSize() - 0x0009 ) != h.tail_checksum) {
+			return false;
+		}
+
+		return true;
 	}
 }
