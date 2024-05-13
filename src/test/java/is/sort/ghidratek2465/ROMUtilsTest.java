@@ -53,18 +53,6 @@ public class ROMUtilsTest {
 			ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B_LATE));
 	}
 
-	static private byte[] getByteArray(int byte_len) {
-		byte[] data = new byte[byte_len];
-		for (int i = 0; i < data.length; ++i) {
-			data[i] = (byte) i;
-		}
-		return data;
-	}
-
-	static private ByteArrayProvider getBytes(int byte_len) {
-		return new ByteArrayProvider(getByteArray(byte_len));
-	}
-
 	@Test
 	public void checksumFullRangeTest() throws IOException {
 		assertEquals(0xB47F, ROMUtils.checksumRange(getBytes(0x400), 0x0000, 0x0400));
@@ -77,6 +65,62 @@ public class ROMUtilsTest {
 	@Test(expected = IOException.class)
 	public void checksumOutOfBounds() throws IOException {
 		ROMUtils.checksumRange(getBytes(0x400), 0x0000, 0x0401);
+	}
+
+	@Test
+	public void hasValidHeaderAt() throws IOException {
+		var data = getBytes(0x400);
+		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
+
+		// Valid header, incorrect checksum.
+		data = getIncorrectChecksumRom();
+		// Make sure the header is valid.
+		assertTrue(new ROMHeader(data, 0).isValid());
+		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
+
+		// Valid header, correct checksum.
+		data = getCorrectChecksumRom();
+		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
+
+		// Valid header, correct checksum, incorrect tail checksum.
+		data = getIncorrectTailChecksumRom();
+		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
+
+		// Valid header, correct checksum and tail checksum.
+		data = getCorrectTailChecksumRom();
+		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
+	}
+
+	@Test
+	public void findValidRomHeadersTest() throws IOException {
+		var data = getIncorrectChecksumRom();
+		assertArrayEquals(new int[0], ROMUtils.findValidRomHeaders(data));
+
+		// Valid header, correct checksum and tail checksum.
+		data = getCorrectTailChecksumRom();
+
+		assertArrayEquals(new int[] { 0x0000 }, ROMUtils.findValidRomHeaders(data));
+
+		// Pad the ROM file with some bytes.
+		byte[] concat = new byte[(int) (data.length() + 0x2000)];
+		ByteBuffer buffer = ByteBuffer.wrap(concat);
+		buffer.put(getByteArray(0x2000));
+		buffer.put(data.readBytes(0, data.length()));
+
+		assertArrayEquals(new int[] { 0x2000 },
+			ROMUtils.findValidRomHeaders(new ByteArrayProvider(concat)));
+	}
+
+	static private byte[] getByteArray(int byte_len) {
+		byte[] data = new byte[byte_len];
+		for (int i = 0; i < data.length; ++i) {
+			data[i] = (byte) i;
+		}
+		return data;
+	}
+
+	static private ByteArrayProvider getBytes(int byte_len) {
+		return new ByteArrayProvider(getByteArray(byte_len));
 	}
 
 	static private ByteArrayProvider getBytesWithHeader(int byte_len, byte[] header) {
@@ -111,44 +155,24 @@ public class ROMUtilsTest {
 		return header;
 	}
 
-	@Test
-	public void doesntHaveValidHeaderAt() throws IOException {
-		var data = getBytes(0x400);
-		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
+	private ByteArrayProvider getCorrectTailChecksumRom() {
+		return getBytesWithHeader(0x8000,
+			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
 	}
 
-	@Test
-	public void hasValidHeaderAt() throws IOException {
-		// Valid header, incorrect checksum.
+	private ByteArrayProvider getIncorrectTailChecksumRom() {
+		return getBytesWithHeader(0x8000,
+			getHeader(0x6ebc, 0x3456, 0x1, ~0x1, 0x80, 0x1234, 0xFFFF, 0x0000, 0x00FF));
+	}
+
+	private ByteArrayProvider getCorrectChecksumRom() {
+		return getBytesWithHeader(0x8000,
+			getHeader(0x42bc, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
+	}
+
+	private ByteArrayProvider getIncorrectChecksumRom() {
 		var data = getBytesWithHeader(0x8000,
 			getHeader(0x1234, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
-
-		ROMHeader h = new ROMHeader(data, 0);
-		assertTrue(h.isValid());
-		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
-
-		// Valid header, correct checksum.
-		data = getBytesWithHeader(0x8000,
-			getHeader(0x42bc, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
-		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
-
-		// Valid header, correct checksum, incorrect tail checksum.
-		data = getBytesWithHeader(0x8000,
-			getHeader(0x6ebc, 0x3456, 0x1, ~0x1, 0x80, 0x1234, 0xFFFF, 0x0000, 0x00FF));
-		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
-
-		// Valid header, correct checksum and tail checksum.
-		data = getBytesWithHeader(0x8000,
-			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
-		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
-	}
-
-	@Test
-	public void findValidRomHeadersTest() throws IOException {
-		// Valid header, correct checksum and tail checksum.
-		var data = getBytesWithHeader(0x8000,
-			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
-
-		assertArrayEquals(new int[] { 0x0000 }, ROMUtils.findValidRomHeaders(data));
+		return data;
 	}
 }

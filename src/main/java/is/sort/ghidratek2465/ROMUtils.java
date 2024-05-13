@@ -89,12 +89,12 @@ public class ROMUtils {
 			return false;
 		}
 
-		if (checksumRange(provider, 0x0002, h.getByteSize() - 0x0002) != h.checksum) {
+		if (checksumRange(provider, offset + 0x0002, h.getByteSize() - 0x0002) != h.checksum) {
 			return false;
 		}
 
 		if (h.tail_checksum != 0 &&
-			checksumRange(provider, 0x0009, h.getByteSize() - 0x0009) != h.tail_checksum) {
+			checksumRange(provider, offset + 0x0009, h.getByteSize() - 0x0009) != h.tail_checksum) {
 			return false;
 		}
 
