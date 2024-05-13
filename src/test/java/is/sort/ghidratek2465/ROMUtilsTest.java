@@ -14,6 +14,7 @@
 
 package is.sort.ghidratek2465;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -140,5 +141,14 @@ public class ROMUtilsTest {
 		data = getBytesWithHeader(0x8000,
 			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
 		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
+	}
+
+	@Test
+	public void findValidRomHeadersTest() throws IOException {
+		// Valid header, correct checksum and tail checksum.
+		var data = getBytesWithHeader(0x8000,
+			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
+
+		assertArrayEquals(new int[] { 0x0000 }, ROMUtils.findValidRomHeaders(data));
 	}
 }

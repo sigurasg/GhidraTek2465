@@ -14,6 +14,8 @@
 package is.sort.ghidratek2465;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import ghidra.app.util.bin.ByteProvider;
 
@@ -99,7 +101,19 @@ public class ROMUtils {
 		return true;
 	}
 
+	/*
+	 * Locates valid ROM headers in @p provider and returns their offsets.
+	 */
 	static int[] findValidRomHeaders(ByteProvider provider) throws IOException {
-		return new int[0];
+		List<Integer> result = new ArrayList<Integer>();
+
+		// Probe every 4k.
+		for (int offset = 0; offset < provider.length(); offset += 0x1000) {
+			if (hasValidHeaderAt(provider, offset)) {
+				result.add(offset);
+			}
+		}
+
+		return result.stream().mapToInt(Integer::intValue).toArray();
 	}
 }
