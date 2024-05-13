@@ -90,7 +90,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 			port_1.addBitField(u8, 1, "rom_select", null);
 			port_1.addBitField(u8, 1, "page_select", null);
 			port_1.addBitField(u8, 1, "pwr_down", null);
-		} catch (InvalidDataTypeException e) {
+		}
+		catch (InvalidDataTypeException e) {
 			e.printStackTrace();
 		}
 
@@ -125,9 +126,9 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		PORT_1.add("PWR_DOWN", 0x20);
 	}
 
-    static Array array(DataType d, int size) {
-        return new ArrayDataType(d, size, -1);
-    }
+	static Array array(DataType d, int size) {
+		return new ArrayDataType(d, size, -1);
+	}
 
 	@Override
 	public String getName() {
@@ -144,7 +145,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
 		if (HasROMHeaderAndCRC(provider)) {
-			LoadSpec spec = new LoadSpec(this, 0x8000, new LanguageCompilerSpecPair("MC6800:BE:16:default", "default"), true);
+			LoadSpec spec = new LoadSpec(this, 0x8000,
+				new LanguageCompilerSpecPair("MC6800:BE:16:default", "default"), true);
 			loadSpecs.add(spec);
 		}
 
@@ -173,10 +175,10 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 	}
 
 	private void addDataTypes(DataTypeManager manager) {
-        var c = manager.createCategory(PATH);
-        c.addDataType(ROM_HEADER, null);
-        c.addDataType(IO_REGION, null);
-        c.addDataType(PORT_1, null);
+		var c = manager.createCategory(PATH);
+		c.addDataType(ROM_HEADER, null);
+		c.addDataType(IO_REGION, null);
+		c.addDataType(PORT_1, null);
 	}
 
 	@Override
@@ -193,19 +195,23 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 			if (memory.getBlock("RAM LO") == null) {
 				// TODO(siggi): this is the 2465A, early 2465B version.
 				// Create the RAM blocks.
-				MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000), as.getAddress(0x8000), 0x0800, false);
+				MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000),
+					as.getAddress(0x8000), 0x0800, false);
 				blk.setPermissions(true, true, true);
 
 				blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
 				blk.setPermissions(true, true, false);
 				blk.setVolatile(true);
-				createData(program,  blk.getStart(), array(IO_REGION, 4), -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+				createData(program, blk.getStart(), array(IO_REGION, 4), -1,
+					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 				program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
 
-				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000, false);
+				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000,
+					false);
 				blk.setPermissions(true, true, true);
 
-				blk = memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
+				blk =
+					memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
 				blk.setPermissions(true, true, true);
 			}
 
@@ -242,10 +248,12 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 
 				// Offset data and length with respect to the load address.
 				InputStream data = provider.getInputStream(page_index + load_addr - 0x8000);
-				MemoryBlock blk = memory.createInitializedBlock("ROM_%d".formatted(page++), addr, data, 0x10000 - load_addr, monitor, true);
+				MemoryBlock blk = memory.createInitializedBlock("ROM_%d".formatted(page++), addr,
+					data, 0x10000 - load_addr, monitor, true);
 				blk.setPermissions(true, false, true);
 
-				createData(program, blk.getStart(), ROM_HEADER, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+				createData(program, blk.getStart(), ROM_HEADER, -1,
+					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
 				length_remaining -= 0x8000;
 				page_index += 0x8000;
@@ -255,18 +263,21 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 				ProcessVector(program, blk, 0xFFFA, "SWI");
 				ProcessVector(program, blk, 0xFFF8, "IRQ");
 			}
-		} catch (Exception e) {
-		    log.appendException(e);
-		    throw new CancelledException("Loading failed: " + e.getMessage());
+		}
+		catch (Exception e) {
+			log.appendException(e);
+			throw new CancelledException("Loading failed: " + e.getMessage());
 		}
 	}
 
-	private void ProcessVector(Program program, MemoryBlock blk, int address, String name) throws Exception {
+	private void ProcessVector(Program program, MemoryBlock blk, int address, String name)
+			throws Exception {
 		AddressSpace ovl = blk.getAddressRange().getAddressSpace();
 		Address addr = ovl.getAddress(address);
 		createData(program, addr, ptr, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 		program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.ANALYSIS);
-		markAsFunction(program, name + "_" + blk.getName(), ovl.getAddress(program.getMemory().getShort(addr)));
+		markAsFunction(program, name + "_" + blk.getName(),
+			ovl.getAddress(program.getMemory().getShort(addr)));
 	}
 
 	@Override
@@ -281,7 +292,8 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options, Program program) {
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
 
 		// TODO: If this loader has custom options, validate them here.  Not all options require
 		// validation.

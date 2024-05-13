@@ -22,52 +22,48 @@ public class ROMUtils {
 
 	// The recognized scope kinds.
 	public enum ScopeKind {
-		UNKNOWN,
-		TEK2465,
-		TEK2465A,
-		TEK2465B,
-		TEK2465B_LATE,
+		UNKNOWN, TEK2465, TEK2465A, TEK2465B, TEK2465B_LATE,
 	}
 
 	// Find the scope kind from part number.
 	public static ScopeKind scopeKindFromPartNumber(int part_number) {
 		switch (part_number) {
-		case 0x1625:
-		case 0x1626:
-		case 0x1627:
-		case 0x1628:
-			return ScopeKind.TEK2465;
+			case 0x1625:
+			case 0x1626:
+			case 0x1627:
+			case 0x1628:
+				return ScopeKind.TEK2465;
 
-		case 0x3302:
-		case 0x3303:
-			return ScopeKind.TEK2465A;
+			case 0x3302:
+			case 0x3303:
+				return ScopeKind.TEK2465A;
 
-		case 0x5370:
-		case 0x5371:
-			return ScopeKind.TEK2465B;
+			case 0x5370:
+			case 0x5371:
+				return ScopeKind.TEK2465B;
 
-		case 0x5876:
-		case 0x5877:
-			return ScopeKind.TEK2465B_LATE;
+			case 0x5876:
+			case 0x5877:
+				return ScopeKind.TEK2465B_LATE;
 
-		default:
-			return ScopeKind.UNKNOWN;
+			default:
+				return ScopeKind.UNKNOWN;
 		}
 	}
 
 	// Get the human readable name of a scope kind.
 	public static String getScopeKindName(ScopeKind kind) {
 		switch (kind) {
-		case TEK2465:
-			return "Tek2465";
-		case TEK2465A:
-			return "Tek2465A";
-		case TEK2465B:
-			return "Tek2465B";
-		case TEK2465B_LATE:
-			return "Tek2465B SN>B050000";
-		default:
-			return "Unknown";
+			case TEK2465:
+				return "Tek2465";
+			case TEK2465A:
+				return "Tek2465A";
+			case TEK2465B:
+				return "Tek2465B";
+			case TEK2465B_LATE:
+				return "Tek2465B SN>B050000";
+			default:
+				return "Unknown";
 		}
 	}
 
@@ -96,10 +92,14 @@ public class ROMUtils {
 		}
 
 		if (h.tail_checksum != 0 &&
-				checksumRange(provider,  0x0009, h.getByteSize() - 0x0009 ) != h.tail_checksum) {
+			checksumRange(provider, 0x0009, h.getByteSize() - 0x0009) != h.tail_checksum) {
 			return false;
 		}
 
 		return true;
+	}
+
+	static int[] findValidRomHeaders(ByteProvider provider) throws IOException {
+		return new int[0];
 	}
 }

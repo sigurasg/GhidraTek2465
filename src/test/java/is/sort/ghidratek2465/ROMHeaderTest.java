@@ -25,25 +25,24 @@ import org.junit.Test;
 
 import ghidra.app.util.bin.ByteArrayProvider;
 
-
 public class ROMHeaderTest {
 	static ROMHeader fromString(String str, int offset) throws IOException {
 		return new ROMHeader(
-					new ByteArrayProvider(HexFormat.of().parseHex(str)),
-					offset);
+			new ByteArrayProvider(HexFormat.of().parseHex(str)),
+			offset);
 	}
 
 	@Test
 	public void validHeaderTest() throws IOException {
 		ROMHeader h = fromString(
 			"1234" +	// Checksum.
-			"3302" +  	// Part number.
-			"06F9" + 	// Version and complement.
-			"80" +		// Load address.
-			"CC00" +  	// Load address and unknown.
-			"FFFF" + 	// ROM end.
-			"0000" +  	// Next ROM.
-			"00FF", 	// Trailer.
+				"3302" +  	// Part number.
+				"06F9" + 	// Version and complement.
+				"80" +		// Load address.
+				"CC00" +  	// Load address and unknown.
+				"FFFF" + 	// ROM end.
+				"0000" +  	// Next ROM.
+				"00FF", 	// Trailer.
 			0);
 
 		assertEquals(h.checksum, 0x1234);
@@ -56,7 +55,7 @@ public class ROMHeaderTest {
 		assertEquals(h.zero_effeff, 0x00FF);
 
 		assertTrue(h.isValid());
-		assertEquals( h.getLoadAddress(), 0x8000);
+		assertEquals(h.getLoadAddress(), 0x8000);
 		assertEquals(h.getByteSize(), 0x8000);
 	}
 
@@ -64,14 +63,14 @@ public class ROMHeaderTest {
 	public void invalidHeaderTest() throws IOException {
 		ROMHeader h = fromString(
 			"12343302" +
-			"07FD" + 	// Invalid version complement.
-			"80CC00FFFF000000FF",
+				"07FD" + 	// Invalid version complement.
+				"80CC00FFFF000000FF",
 			0);
 		assertFalse(h.isValid());
 
 		h = fromString(
 			"1234330207F980CC00FFFF0000" +
-			"00FE",  // Invalid signature.
+				"00FE",  // Invalid signature.
 			0);
 		assertFalse(h.isValid());
 	}

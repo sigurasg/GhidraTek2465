@@ -23,7 +23,6 @@ import ghidra.program.model.listing.Program;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
-
 /**
  * TODO: Provide class-level documentation that describes what this analyzer does.
  */
@@ -31,8 +30,8 @@ public class Tek2465Analyzer extends AbstractAnalyzer {
 	public Tek2465Analyzer() {
 
 		// TODO: Name the analyzer and give it a description.
-
-		super("Tek2465 Analyzer", "Tries to create references when ROM paging occurs", AnalyzerType.FUNCTION_ANALYZER);
+		super("Tek2465 Analyzer", "Tries to create references when ROM paging occurs",
+			AnalyzerType.FUNCTION_ANALYZER);
 	}
 
 	@Override

@@ -48,14 +48,14 @@ public class ROMUtilsTest {
 		assertEquals("Tek2465", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465));
 		assertEquals("Tek2465A", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465A));
 		assertEquals("Tek2465B", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B));
-		assertEquals("Tek2465B SN>B050000", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B_LATE));
+		assertEquals("Tek2465B SN>B050000",
+			ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B_LATE));
 	}
-
 
 	static private byte[] getByteArray(int byte_len) {
 		byte[] data = new byte[byte_len];
 		for (int i = 0; i < data.length; ++i) {
-			data[i] = (byte)i;
+			data[i] = (byte) i;
 		}
 		return data;
 	}
@@ -97,15 +97,15 @@ public class ROMUtilsTest {
 			int next_rom,
 			int zero_effeff) {
 		byte[] header = {
-				(byte)(checksum >> 8), (byte)(checksum),
-				(byte)(part_number >> 8), (byte)(part_number),
-				(byte)version,
-				(byte)version_compl,
-				(byte)load_addr,
-				(byte)(tail_checksum >> 8), (byte)(tail_checksum),
-				(byte)(rom_end >> 8), (byte)(rom_end),
-				(byte)(next_rom >> 8), (byte)(next_rom),
-				(byte)(zero_effeff >> 8), (byte)(zero_effeff)
+			(byte) (checksum >> 8), (byte) (checksum),
+			(byte) (part_number >> 8), (byte) (part_number),
+			(byte) version,
+			(byte) version_compl,
+			(byte) load_addr,
+			(byte) (tail_checksum >> 8), (byte) (tail_checksum),
+			(byte) (rom_end >> 8), (byte) (rom_end),
+			(byte) (next_rom >> 8), (byte) (next_rom),
+			(byte) (zero_effeff >> 8), (byte) (zero_effeff)
 		};
 		return header;
 	}
@@ -120,25 +120,25 @@ public class ROMUtilsTest {
 	public void hasValidHeaderAt() throws IOException {
 		// Valid header, incorrect checksum.
 		var data = getBytesWithHeader(0x8000,
-				getHeader(0x1234, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
+			getHeader(0x1234, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
 
-		ROMHeader h = new ROMHeader(data,  0);
+		ROMHeader h = new ROMHeader(data, 0);
 		assertTrue(h.isValid());
 		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
 
 		// Valid header, correct checksum.
 		data = getBytesWithHeader(0x8000,
-				getHeader(0x42bc, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
+			getHeader(0x42bc, 0x3456, 0x1, ~0x1, 0x80, 0x0000, 0xFFFF, 0x0000, 0x00FF));
 		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
 
 		// Valid header, correct checksum, incorrect tail checksum.
 		data = getBytesWithHeader(0x8000,
-				getHeader(0x6ebc, 0x3456, 0x1, ~0x1, 0x80, 0x1234, 0xFFFF, 0x0000, 0x00FF));
+			getHeader(0x6ebc, 0x3456, 0x1, ~0x1, 0x80, 0x1234, 0xFFFF, 0x0000, 0x00FF));
 		assertFalse(ROMUtils.hasValidHeaderAt(data, 0));
 
 		// Valid header, correct checksum and tail checksum.
 		data = getBytesWithHeader(0x8000,
-				getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
+			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
 		assertTrue(ROMUtils.hasValidHeaderAt(data, 0));
 	}
 }
