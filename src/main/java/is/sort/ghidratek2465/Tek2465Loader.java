@@ -24,9 +24,12 @@ import java.util.List;
 import ghidra.app.util.Option;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.opinion.AbstractProgramWrapperLoader;
+import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.LoadSpec;
+import ghidra.app.util.opinion.Loaded;
+import ghidra.app.util.opinion.LoaderTier;
 import ghidra.framework.model.DomainObject;
+import ghidra.framework.model.Project;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
@@ -41,15 +44,25 @@ import ghidra.util.task.TaskMonitor;
 /**
  * TODO: Provide class-level documentation that describes what this loader does.
  */
-public class Tek2465Loader extends AbstractProgramWrapperLoader {
+public class Tek2465Loader extends AbstractProgramLoader {
 	@Override
 	public String getName() {
 		return "Tek2465";
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram(Program program) {
+	public boolean supportsLoadIntoProgram() {
 		return true;
+	}
+
+	@Override
+	public LoaderTier getTier() {
+		return LoaderTier.SPECIALIZED_TARGET_LOADER;
+	}
+
+	@Override
+	public int getTierPriority() {
+		return 0;
 	}
 
 	@Override
@@ -76,7 +89,7 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 		if (!header.isValid()) {
 			return false;
 		}
-		int checksum = ROMUtils.checksumRange(provider, 0x0002, header.getByteSize() - 2);
+		int checksum = ROMUtils.checksumRange(provider, offset + 0x0002, header.getByteSize() - 2);
 
 		if (header.checksum != checksum) {
 			return false;
@@ -86,9 +99,37 @@ public class Tek2465Loader extends AbstractProgramWrapperLoader {
 	}
 
 	@Override
-	protected void load(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program, TaskMonitor monitor, MessageLog log)
-			throws CancelledException, IOException {
+	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String loadedName,
+			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Object consumer, TaskMonitor monitor)
+			throws IOException, CancelledException {
+		var result = new ArrayList<Loaded<Program>>();
+		var pair = loadSpec.getLanguageCompilerSpec();
+		var language = getLanguageService().getLanguage(pair.languageID);
+		var compiler = language.getCompilerSpecByID(pair.compilerSpecID);
+
+		var baseAddress = language.getAddressFactory().getDefaultAddressSpace().getAddress(0);
+		var program = createProgram(provider, loadedName, baseAddress, getName(), language,
+			compiler, consumer);
+		var success = false;
+		try {
+			loadInto(provider, loadSpec, options, log, program, monitor);
+			createDefaultMemoryBlocks(program, language, log);
+
+			success = result.add(new Loaded<>(program, loadedName, projectFolderPath));
+		}
+		finally {
+			if (!success) {
+				program.release(consumer);
+			}
+		}
+		return result;
+	}
+
+	@Override
+	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			MessageLog log, Program program, TaskMonitor monitor)
+			throws IOException, CancelledException {
 		DataTypes.addAll(program.getDataTypeManager());
 
 		var as = program.getAddressFactory().getDefaultAddressSpace();
