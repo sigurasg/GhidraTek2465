@@ -53,6 +53,38 @@ public class ROMUtils {
 		}
 	}
 
+	// Find the component designator from the part number.
+	public static String designatorFromPartNumber(int part_number) {
+		switch (part_number) {
+			case 0x1625:
+				return "U2178";
+			case 0x1626:
+				return "U2378";
+			case 0x1627:
+				return "U2362";
+			case 0x1628:
+				return "U2162";
+
+			case 0x3302:
+				return "U2160";
+			case 0x3303:
+				return "U2260";
+
+			case 0x5370:
+				return "U2160";
+			case 0x5371:
+				return "U2260";
+
+			case 0x5876:
+				return "U2160";
+			case 0x5877:
+				return "U2360";
+
+			default:
+				return "UNKNOWN";
+		}
+	}
+
 	// Get the human readable name of a scope kind.
 	public static String getScopeKindName(ScopeKind kind) {
 		switch (kind) {
