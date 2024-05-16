@@ -107,7 +107,9 @@ public class ROMUtils {
 	static int[] findValidRomHeaders(ByteProvider provider) throws IOException {
 		List<Integer> result = new ArrayList<Integer>();
 
-		// Probe every 4k.
+		// Probe every 4k. Technically this is not correct, as it might turn up
+		// overlapping ROM images. Should work well enough for our purposes,
+		// though.
 		for (int offset = 0; offset < provider.length(); offset += 0x1000) {
 			if (hasValidHeaderAt(provider, offset)) {
 				result.add(offset);
