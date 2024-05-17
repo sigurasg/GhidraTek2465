@@ -30,15 +30,20 @@ import ghidra.app.util.opinion.Loaded;
 import ghidra.app.util.opinion.LoaderTier;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
+import ghidra.framework.store.LockException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
+import ghidra.program.model.util.CodeUnitInsertionException;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -113,10 +118,22 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			compiler, consumer);
 		var success = false;
 		try {
-			loadInto(provider, loadSpec, options, log, program, monitor);
+			// TODO(siggi): Add a boolean option for whether or not to do this.
+			DataTypes.addAll(program.getDataTypeManager());
+
+			var as = program.getAddressFactory().getDefaultAddressSpace();
+			Memory memory = program.getMemory();
+			addScopeMemoryBlocks(program, as, memory);
+			// TODO(siggi): Add a boolean option for whether or not to do this.
 			createDefaultMemoryBlocks(program, language, log);
 
+			loadInto(provider, loadSpec, options, log, program, monitor);
+
 			success = result.add(new Loaded<>(program, loadedName, projectFolderPath));
+		}
+		catch (LockException | MemoryConflictException | AddressOverflowException
+				| CodeUnitInsertionException | InvalidInputException e) {
+			log.appendException(e);
 		}
 		finally {
 			if (!success) {
@@ -130,36 +147,11 @@ public class Tek2465Loader extends AbstractProgramLoader {
 	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
 			MessageLog log, Program program, TaskMonitor monitor)
 			throws IOException, CancelledException {
-		DataTypes.addAll(program.getDataTypeManager());
 
 		var as = program.getAddressFactory().getDefaultAddressSpace();
 		Memory memory = program.getMemory();
 
 		try {
-			// Only add the fixed blocks the first time invoked.
-			if (memory.getBlock("RAM LO") == null) {
-				// TODO(siggi): this is the 2465A, early 2465B version.
-				// Create the RAM blocks.
-				MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000),
-					as.getAddress(0x8000), 0x0800, false);
-				blk.setPermissions(true, true, true);
-
-				blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
-				blk.setPermissions(true, true, false);
-				blk.setVolatile(true);
-				createData(program, blk.getStart(), DataTypes.IO_REGION, -1,
-					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-				program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
-
-				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000,
-					false);
-				blk.setPermissions(true, true, true);
-
-				blk =
-					memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
-				blk.setPermissions(true, true, true);
-			}
-
 			// Load the ROM pages.
 			long length_remaining = provider.length();
 			long page_index = 0;
@@ -215,6 +207,34 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 	}
 
+	private void addScopeMemoryBlocks(Program program, AddressSpace as, Memory memory)
+			throws LockException, MemoryConflictException, AddressOverflowException,
+			CodeUnitInsertionException, InvalidInputException {
+		// Only add the fixed blocks the first time invoked.
+		if (memory.getBlock("RAM LO") == null) {
+			// TODO(siggi): this is the 2465A, early 2465B version.
+			// Create the RAM blocks.
+			MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000),
+				as.getAddress(0x8000), 0x0800, false);
+			blk.setPermissions(true, true, true);
+
+			blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
+			blk.setPermissions(true, true, false);
+			blk.setVolatile(true);
+			createData(program, blk.getStart(), DataTypes.IO_REGION, -1,
+				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
+
+			blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000,
+				false);
+			blk.setPermissions(true, true, true);
+
+			blk =
+				memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
+			blk.setPermissions(true, true, true);
+		}
+	}
+
 	private void ProcessVector(Program program, MemoryBlock blk, int address, String name)
 			throws Exception {
 		AddressSpace ovl = blk.getAddressRange().getAddressSpace();
@@ -231,7 +251,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		List<Option> list =
 			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
 
-		list.add(new Option("ScopeType", "2465a"));
+		list.add(new ScopeKindOption("Scope Kind", ScopeKind.UNKNOWN));
 
 		return list;
 	}

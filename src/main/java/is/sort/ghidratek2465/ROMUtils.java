@@ -20,13 +20,6 @@ import java.util.List;
 import ghidra.app.util.bin.ByteProvider;
 
 public class ROMUtils {
-	// TODO(siggi): Search ROMs for valid headers and return their location.
-
-	// The recognized scope kinds.
-	public enum ScopeKind {
-		UNKNOWN, TEK2465, TEK2465A, TEK2465B, TEK2465B_LATE,
-	}
-
 	// Find the scope kind from part number.
 	public static ScopeKind scopeKindFromPartNumber(int part_number) {
 		switch (part_number) {
