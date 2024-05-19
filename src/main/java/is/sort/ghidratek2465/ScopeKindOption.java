@@ -17,6 +17,7 @@ import java.awt.Component;
 
 import javax.swing.BoxLayout;
 import javax.swing.ButtonGroup;
+import javax.swing.JComboBox;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
@@ -54,14 +55,25 @@ class ScopeKindOption extends Option {
 		var panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
-		var group = new ButtonGroup();
+		var comboBox = new JComboBox();
 		for (var kind : ScopeKind.values()) {
-			var button = new JRadioButton(ROMUtils.getScopeKindName(kind));
-			button.addActionListener(e -> option.setValue(kind));
-			button.setSelected(kind.equals(option.getValue()));
+			comboBox.addItem(ROMUtils.getScopeKindName(kind));
+		}
+		comboBox.addActionListener(
+			e -> option.setValue(ScopeKind.values()[comboBox.getSelectedIndex()]));
 
-			group.add(button);
-			panel.add(button);
+		panel.add(comboBox);
+
+		if (false) {
+			var group = new ButtonGroup();
+			for (var kind : ScopeKind.values()) {
+				var button = new JRadioButton(ROMUtils.getScopeKindName(kind));
+				button.addActionListener(e -> option.setValue(kind));
+				button.setSelected(kind.equals(option.getValue()));
+
+				group.add(button);
+				panel.add(button);
+			}
 		}
 		return panel;
 	}

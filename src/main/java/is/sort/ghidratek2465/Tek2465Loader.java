@@ -22,6 +22,7 @@ import java.util.Collection;
 import java.util.List;
 
 import ghidra.app.util.Option;
+import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramLoader;
@@ -50,6 +51,10 @@ import ghidra.util.task.TaskMonitor;
  * TODO: Provide class-level documentation that describes what this loader does.
  */
 public class Tek2465Loader extends AbstractProgramLoader {
+	private static final String OPTION_ADD_MEMORY_BLOCKS = "Add Memory Blocks";
+	private static final String OPTION_ADD_TYPES = "Add Types";
+	private static final String OPTION_SCOPE_KIND = "Scope Kind";
+
 	@Override
 	public String getName() {
 		return "Tek2465";
@@ -81,6 +86,29 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 
 		return loadSpecs;
+	}
+
+	@Override
+	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
+			DomainObject domainObject, boolean isLoadIntoProgram) {
+		List<Option> list =
+			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
+
+		// TODO(siggi): Get the scope kind from provider
+		list.add(new ScopeKindOption(OPTION_SCOPE_KIND, ScopeKind.UNKNOWN));
+		list.add(new Option(OPTION_ADD_TYPES, true));
+		list.add(new Option(OPTION_ADD_MEMORY_BLOCKS, true));
+		return list;
+	}
+
+	@Override
+	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
+			Program program) {
+
+		// TODO: If this loader has custom options, validate them here.  Not all options require
+		// validation.
+
+		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	private boolean HasROMHeaderAndCRC(ByteProvider provider) throws IOException {
@@ -117,13 +145,18 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		var program = createProgram(provider, loadedName, baseAddress, getName(), language,
 			compiler, consumer);
 		var success = false;
+		ScopeKind scopeKind = OptionUtils.getOption(OPTION_SCOPE_KIND, options, ScopeKind.UNKNOWN);
+		boolean addTypes = OptionUtils.getOption(OPTION_ADD_TYPES, options, true);
+		boolean addMemoryBlocks = OptionUtils.getOption(OPTION_ADD_MEMORY_BLOCKS, options, true);
 		try {
-			// TODO(siggi): Add a boolean option for whether or not to do this.
-			DataTypes.addAll(program.getDataTypeManager());
-
+			if (addTypes) {
+				addTypes(scopeKind, program);
+			}
 			var as = program.getAddressFactory().getDefaultAddressSpace();
 			Memory memory = program.getMemory();
-			addScopeMemoryBlocks(program, as, memory);
+			if (addMemoryBlocks) {
+				addScopeMemoryBlocks(scopeKind, program, as, memory);
+			}
 			// TODO(siggi): Add a boolean option for whether or not to do this.
 			createDefaultMemoryBlocks(program, language, log);
 
@@ -141,6 +174,11 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			}
 		}
 		return result;
+	}
+
+	private void addTypes(ScopeKind scopeKind, Program program) {
+		// TODO(siggi): Add a boolean option for whether or not to do this.
+		DataTypes.addAll(program.getDataTypeManager());
 	}
 
 	@Override
@@ -207,10 +245,11 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 	}
 
-	private void addScopeMemoryBlocks(Program program, AddressSpace as, Memory memory)
+	private void addScopeMemoryBlocks(ScopeKind scopeKind, Program program, AddressSpace as,
+			Memory memory)
 			throws LockException, MemoryConflictException, AddressOverflowException,
 			CodeUnitInsertionException, InvalidInputException {
-		// Only add the fixed blocks the first time invoked.
+		// TODO(siggi): Create the various subtype blocks.
 		if (memory.getBlock("RAM LO") == null) {
 			// TODO(siggi): this is the 2465A, early 2465B version.
 			// Create the RAM blocks.
@@ -245,24 +284,4 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			ovl.getAddress(program.getMemory().getShort(addr)));
 	}
 
-	@Override
-	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
-		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
-
-		list.add(new ScopeKindOption("Scope Kind", ScopeKind.UNKNOWN));
-
-		return list;
-	}
-
-	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program) {
-
-		// TODO: If this loader has custom options, validate them here.  Not all options require
-		// validation.
-
-		return super.validateOptions(provider, loadSpec, options, program);
-	}
 }
