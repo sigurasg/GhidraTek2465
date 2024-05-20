@@ -29,28 +29,28 @@ import ghidra.app.util.bin.ByteArrayProvider;
 public class ROMUtilsTest {
 	@Test
 	public void getScopeKindTest() {
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1625), ROMUtils.ScopeKind.TEK2465);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1626), ROMUtils.ScopeKind.TEK2465);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1627), ROMUtils.ScopeKind.TEK2465);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1628), ROMUtils.ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1625), ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1626), ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1627), ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1628), ScopeKind.TEK2465);
 
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3302), ROMUtils.ScopeKind.TEK2465A);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3303), ROMUtils.ScopeKind.TEK2465A);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3302), ScopeKind.TEK2465A);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3303), ScopeKind.TEK2465A);
 
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5370), ROMUtils.ScopeKind.TEK2465B);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5371), ROMUtils.ScopeKind.TEK2465B);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5370), ScopeKind.TEK2465B);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5371), ScopeKind.TEK2465B);
 
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5876), ROMUtils.ScopeKind.TEK2465B_LATE);
-		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5877), ROMUtils.ScopeKind.TEK2465B_LATE);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5876), ScopeKind.TEK2465B_LATE);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x5877), ScopeKind.TEK2465B_LATE);
 	}
 
 	@Test
 	public void getScopeKindNameTest() {
-		assertEquals("Tek2465", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465));
-		assertEquals("Tek2465A", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465A));
-		assertEquals("Tek2465B", ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B));
+		assertEquals("Tek2465", ROMUtils.getScopeKindName(ScopeKind.TEK2465));
+		assertEquals("Tek2465A", ROMUtils.getScopeKindName(ScopeKind.TEK2465A));
+		assertEquals("Tek2465B", ROMUtils.getScopeKindName(ScopeKind.TEK2465B));
 		assertEquals("Tek2465B SN>B050000",
-			ROMUtils.getScopeKindName(ROMUtils.ScopeKind.TEK2465B_LATE));
+			ROMUtils.getScopeKindName(ScopeKind.TEK2465B_LATE));
 	}
 
 	@Test
