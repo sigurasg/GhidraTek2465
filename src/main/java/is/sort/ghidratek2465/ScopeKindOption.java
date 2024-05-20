@@ -16,10 +16,8 @@ package is.sort.ghidratek2465;
 import java.awt.Component;
 
 import javax.swing.BoxLayout;
-import javax.swing.ButtonGroup;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 
 import ghidra.app.util.Option;
 
@@ -59,22 +57,12 @@ class ScopeKindOption extends Option {
 		for (var kind : ScopeKind.values()) {
 			comboBox.addItem(ROMUtils.getScopeKindName(kind));
 		}
+		comboBox.setSelectedItem(ROMUtils.getScopeKindName((ScopeKind) option.getValue()));
+
 		comboBox.addActionListener(
 			e -> option.setValue(ScopeKind.values()[comboBox.getSelectedIndex()]));
 
 		panel.add(comboBox);
-
-		if (false) {
-			var group = new ButtonGroup();
-			for (var kind : ScopeKind.values()) {
-				var button = new JRadioButton(ROMUtils.getScopeKindName(kind));
-				button.addActionListener(e -> option.setValue(kind));
-				button.setSelected(kind.equals(option.getValue()));
-
-				group.add(button);
-				panel.add(button);
-			}
-		}
 		return panel;
 	}
 

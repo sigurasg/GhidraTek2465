@@ -79,7 +79,8 @@ public class Tek2465Loader extends AbstractProgramLoader {
 	public Collection<LoadSpec> findSupportedLoadSpecs(ByteProvider provider) throws IOException {
 		List<LoadSpec> loadSpecs = new ArrayList<>();
 
-		if (HasROMHeaderAndCRC(provider)) {
+		var headers = ROMUtils.findValidRomHeaders(provider);
+		if (headers.length > 0) {
 			LoadSpec spec = new LoadSpec(this, 0x8000,
 				new LanguageCompilerSpecPair("MC6800:BE:16:default", "default"), true);
 			loadSpecs.add(spec);
@@ -94,10 +95,22 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		List<Option> list =
 			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
 
-		// TODO(siggi): Get the scope kind from provider
-		list.add(new ScopeKindOption(OPTION_SCOPE_KIND, ScopeKind.UNKNOWN));
-		list.add(new Option(OPTION_ADD_TYPES, true));
-		list.add(new Option(OPTION_ADD_MEMORY_BLOCKS, true));
+		ScopeKind scopeKind = ScopeKind.UNKNOWN;
+		try {
+			// Infer the scope kind from the first ROM header.
+			var headers = ROMUtils.findValidRomHeaders(provider);
+			ROMHeader header = new ROMHeader(provider, headers[0]);
+			scopeKind = ROMUtils.scopeKindFromPartNumber(header.part_number);
+		}
+		catch (IOException e) {
+		}
+
+		list.add(new ScopeKindOption(OPTION_SCOPE_KIND, scopeKind));
+		if (!isLoadIntoProgram) {
+			list.add(new Option(OPTION_ADD_TYPES, true));
+			list.add(new Option(OPTION_ADD_MEMORY_BLOCKS, true));
+		}
+
 		return list;
 	}
 
@@ -109,26 +122,6 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		// validation.
 
 		return super.validateOptions(provider, loadSpec, options, program);
-	}
-
-	private boolean HasROMHeaderAndCRC(ByteProvider provider) throws IOException {
-		ROMHeader header = new ROMHeader(provider, 0);
-		int offset = 0;
-		if (!header.isValid()) {
-			// Secondary ROMs may not have a header at the start.
-			header = new ROMHeader(provider, 0x2000);
-			offset = 0x2000;
-		}
-		if (!header.isValid()) {
-			return false;
-		}
-		int checksum = ROMUtils.checksumRange(provider, offset + 0x0002, header.getByteSize() - 2);
-
-		if (header.checksum != checksum) {
-			return false;
-		}
-
-		return true;
 	}
 
 	@Override
@@ -150,14 +143,26 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		boolean addMemoryBlocks = OptionUtils.getOption(OPTION_ADD_MEMORY_BLOCKS, options, true);
 		try {
 			if (addTypes) {
-				addTypes(scopeKind, program);
+				int id = program.startTransaction("Add scope data types.");
+				try {
+					addTypes(scopeKind, program);
+				}
+				finally {
+					program.endTransaction(id, true);
+				}
 			}
 			var as = program.getAddressFactory().getDefaultAddressSpace();
 			Memory memory = program.getMemory();
 			if (addMemoryBlocks) {
-				addScopeMemoryBlocks(scopeKind, program, as, memory);
+				int id = program.startTransaction("Add scope memory blocks.");
+				try {
+					addScopeMemoryBlocks(scopeKind, program, as, memory);
+				}
+				finally {
+					program.endTransaction(id, true);
+				}
 			}
-			// TODO(siggi): Add a boolean option for whether or not to do this.
+
 			createDefaultMemoryBlocks(program, language, log);
 
 			loadInto(provider, loadSpec, options, log, program, monitor);
@@ -188,50 +193,34 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 		var as = program.getAddressFactory().getDefaultAddressSpace();
 		Memory memory = program.getMemory();
-
 		try {
-			// Load the ROM pages.
-			long length_remaining = provider.length();
-			long page_index = 0;
-			int page = 0;
+			var headers = ROMUtils.findValidRomHeaders(provider);
+			// Derive the designator from the first (and possibly only) header.
+			ROMHeader header = new ROMHeader(provider, headers[0]);
+			String designator = ROMUtils.designatorFromPartNumber(header.part_number);
 
-			// Find the next page number.
-			while (memory.getBlock("ROM_%d".formatted(page)) != null) {
-				++page;
-			}
-
-			while (length_remaining > 0) {
-				ROMHeader header = new ROMHeader(provider, page_index);
-				if (!header.isValid()) {
-					// Check for a header at the supposed load address.
-					header = new ROMHeader(provider, page_index + 0x2000);
-				}
-				if (!header.isValid()) {
-					throw new CancelledException("ROM header invalid.");
-				}
+			for (int i = 0; i < headers.length; ++i) {
+				int offset = headers[i];
+				header = new ROMHeader(provider, offset);
 
 				// Find the load address for this page.
-				int load_addr = header.getLoadAddress();
-				Address addr = as.getAddress(load_addr);
-				if (load_addr != 0x8000) {
-					// Check that there's a valid ROM header at the load address.
-					header = new ROMHeader(provider, page_index + load_addr - 0x8000);
-					if (!header.isValid()) {
-						throw new CancelledException("Load address ROM header invalid");
-					}
-				}
+				int loadAddr = header.getLoadAddress();
+				Address addr = as.getAddress(loadAddr);
 
-				// Offset data and length with respect to the load address.
-				InputStream data = provider.getInputStream(page_index + load_addr - 0x8000);
-				MemoryBlock blk = memory.createInitializedBlock("ROM_%d".formatted(page++), addr,
-					data, 0x10000 - load_addr, monitor, true);
+				InputStream data = provider.getInputStream(offset);
+				String name;
+				if (headers.length == 1) {
+					name = designator;
+				}
+				else {
+					name = "%s-%d".formatted(designator, i);
+				}
+				MemoryBlock blk = memory.createInitializedBlock(name, addr,
+					data, header.getByteSize(), monitor, true);
 				blk.setPermissions(true, false, true);
 
 				createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
 					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-
-				length_remaining -= 0x8000;
-				page_index += 0x8000;
 
 				ProcessVector(program, blk, 0xFFFE, "RST");
 				ProcessVector(program, blk, 0xFFFC, "NMI");
