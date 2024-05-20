@@ -94,6 +94,23 @@ public class ROMUtils {
 		}
 	}
 
+	public static boolean isOverlay(ROMHeader header) {
+		switch (scopeKindFromPartNumber(header.part_number)) {
+			case TEK2465:
+				return false;
+
+			case TEK2465A:
+			case TEK2465B:
+				return true;
+
+			case TEK2465B_LATE:
+				return header.getLoadAddress() == 0xC000;
+
+			default:
+				return true;
+		}
+	}
+
 	// Computes the checksum of the next `length` bytes in `str`.
 	static int checksumRange(ByteProvider provider, int offset, int length) throws IOException {
 		byte[] data = provider.readBytes(offset, length);
@@ -118,11 +135,13 @@ public class ROMUtils {
 			return false;
 		}
 
+		/* This doesn't work for the TekWiki image of 160-5876-01. The secondary
+		 * checksum doesn't match for whatever reason.
 		if (h.tail_checksum != 0 &&
 			checksumRange(provider, offset + 0x0009, h.getByteSize() - 0x0009) != h.tail_checksum) {
 			return false;
 		}
-
+		*/
 		return true;
 	}
 

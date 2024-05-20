@@ -142,21 +142,21 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		boolean addTypes = OptionUtils.getOption(OPTION_ADD_TYPES, options, true);
 		boolean addMemoryBlocks = OptionUtils.getOption(OPTION_ADD_MEMORY_BLOCKS, options, true);
 		try {
+			DataTypes dataTypes = null;
 			if (addTypes) {
 				int id = program.startTransaction("Add scope data types.");
 				try {
-					addTypes(scopeKind, program);
+					dataTypes = new DataTypes(scopeKind);
+					dataTypes.addAll(program.getDataTypeManager());
 				}
 				finally {
 					program.endTransaction(id, true);
 				}
 			}
-			var as = program.getAddressFactory().getDefaultAddressSpace();
-			Memory memory = program.getMemory();
 			if (addMemoryBlocks) {
 				int id = program.startTransaction("Add scope memory blocks.");
 				try {
-					addScopeMemoryBlocks(scopeKind, program, as, memory);
+					addScopeMemoryBlocks(scopeKind, dataTypes, program);
 				}
 				finally {
 					program.endTransaction(id, true);
@@ -179,11 +179,6 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			}
 		}
 		return result;
-	}
-
-	private void addTypes(ScopeKind scopeKind, Program program) {
-		// TODO(siggi): Add a boolean option for whether or not to do this.
-		DataTypes.addAll(program.getDataTypeManager());
 	}
 
 	@Override
@@ -215,8 +210,9 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				else {
 					name = "%s-%d".formatted(designator, i);
 				}
+				// Create the ROM memory block.
 				MemoryBlock blk = memory.createInitializedBlock(name, addr,
-					data, header.getByteSize(), monitor, true);
+					data, header.getByteSize(), monitor, ROMUtils.isOverlay(header));
 				blk.setPermissions(true, false, true);
 
 				createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
@@ -234,43 +230,67 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 	}
 
-	private void addScopeMemoryBlocks(ScopeKind scopeKind, Program program, AddressSpace as,
-			Memory memory)
+	private void addScopeMemoryBlocks(ScopeKind scopeKind, DataTypes dataTypes, Program program)
 			throws LockException, MemoryConflictException, AddressOverflowException,
 			CodeUnitInsertionException, InvalidInputException {
-		// TODO(siggi): Create the various subtype blocks.
-		if (memory.getBlock("RAM LO") == null) {
-			// TODO(siggi): this is the 2465A, early 2465B version.
-			// Create the RAM blocks.
-			MemoryBlock blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000),
-				as.getAddress(0x8000), 0x0800, false);
-			blk.setPermissions(true, true, true);
+		var as = program.getAddressFactory().getDefaultAddressSpace();
+		Memory memory = program.getMemory();
 
-			blk = memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
-			blk.setPermissions(true, true, false);
-			blk.setVolatile(true);
-			createData(program, blk.getStart(), DataTypes.IO_REGION, -1,
-				ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-			program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
+		// Create and optionally type the IO space.
+		MemoryBlock blk =
+			memory.createUninitializedBlock("IO", as.getAddress(0x0800), 0x0800, false);
+		blk.setPermissions(true, true, false);
+		blk.setVolatile(true);
+		createData(program, blk.getStart(), dataTypes != null ? dataTypes.ioRegion : null, -1,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+		program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
 
-			blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000,
-				false);
-			blk.setPermissions(true, true, true);
+		switch (scopeKind) {
+			case TEK2465:
+				blk =
+					memory.createUninitializedBlock("RAM", as.getAddress(0x0000), 0x0800, false);
+				blk.setPermissions(true, true, true);
+				break;
 
-			blk =
-				memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
-			blk.setPermissions(true, true, true);
+			case TEK2465A:
+			case TEK2465B:
+			case TEK2465B_LATE:
+				// Create the RAM blocks.
+				blk = memory.createByteMappedBlock("RAM LO", as.getAddress(0x0000),
+					as.getAddress(0x8000), 0x0800, false);
+				blk.setPermissions(true, true, true);
+
+				blk =
+					memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
+				blk.setPermissions(true, true, true);
 		}
+
+		// Create the options space.
+		switch (scopeKind) {
+			case TEK2465:
+			case TEK2465A:
+			case TEK2465B:
+				blk = memory.createUninitializedBlock("Options", as.getAddress(0x1000), 0x7000,
+					false);
+				break;
+			case TEK2465B_LATE:
+				blk = memory.createUninitializedBlock("Options", as.getAddress(0x2000), 0x6000,
+					false);
+				break;
+		}
+		blk.setPermissions(true, true, true);
 	}
 
 	private void ProcessVector(Program program, MemoryBlock blk, int address, String name)
 			throws Exception {
 		AddressSpace ovl = blk.getAddressRange().getAddressSpace();
 		Address addr = ovl.getAddress(address);
-		createData(program, addr, DataTypes.ptr, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-		program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.ANALYSIS);
-		markAsFunction(program, name + "_" + blk.getName(),
-			ovl.getAddress(program.getMemory().getShort(addr)));
+		if (blk.contains(addr)) {
+			createData(program, addr, DataTypes.PTR, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+			program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.ANALYSIS);
+			markAsFunction(program, name + "_" + blk.getName(),
+				ovl.getAddress(program.getMemory().getShort(addr)));
+		}
 	}
 
 }
