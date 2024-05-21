@@ -128,37 +128,77 @@ public class DataTypes {
 		}
 
 		boolean is2465 = scopeKind == ScopeKind.TEK2465;
-		var coarse = new StructureDataType(PATH, "c", 0);
-		coarse.add(array(U8, 64), is2465 ? "unused" : "dmux2_off", null);
-		coarse.add(array(U8, 63), "dac_msb", null);
-		coarse.add(U16, "dac_full", null);
-		coarse.add(array(U8, 63), "dac_lsb", null);
-		coarse.add(array(port1, 64), "port_1_clk", null);
-		coarse.add(array(U8, 64), "ros_1_clk", null);
-		coarse.add(array(U8, 64), "ros_2_clk", null);
-		coarse.add(array(port2, 64), "port_2_clk", null);
+		switch (scopeKind) {
+			case TEK2465:
+			case TEK2465A:
+			case TEK2465B: {
+				// These are all quite similar.
+				var coarse = new StructureDataType(PATH, "c", 0);
+				coarse.add(array(U8, 64), is2465 ? "unused" : "dmux2_off", null);
+				coarse.add(array(U8, 63), "dac_msb", null);
+				coarse.add(U16, "dac_full", null);
+				coarse.add(array(U8, 63), "dac_lsb", null);
+				coarse.add(array(port1, 64), "port_1_clk", null);
+				coarse.add(array(U8, 64), "ros_1_clk", null);
+				coarse.add(array(U8, 64), "ros_2_clk", null);
+				coarse.add(array(port2, 64), "port_2_clk", null);
 
-		Structure fine = new StructureDataType(PATH, "f", 0);
-		fine.add(U8, is2465 ? "unused" : "dmux2_on", null);
-		fine.add(U8, "dmux0_off", null);
-		fine.add(U8, "dmux0_on", null);
-		fine.add(port3, "port_3_in", null);
-		fine.add(U8, "dmux1_off", null);
-		fine.add(U8, "dmux1_on", null);
-		fine.add(U8, "led_clk", null);
-		fine.add(U8, "disp_seq_clk", null);
-		fine.add(U8, "atn_clk", null);
-		fine.add(U8, "ch_2_pa_clk", null);
-		fine.add(U8, "ch_1_pa_clk", null);
-		fine.add(U8, "b_swp_clk", null);
-		fine.add(U8, "a_swp_clk", null);
-		fine.add(U8, "b_trig_clk", null);
-		fine.add(U8, "a_trig_clk", null);
-		fine.add(U8, "trig_stat_strb", null);
-		coarse.add(array(fine, 4), "f", null);
+				Structure fine = new StructureDataType(PATH, "f", 0);
+				fine.add(U8, is2465 ? "unused" : "dmux2_on", null);
+				fine.add(U8, "dmux0_off", null);
+				fine.add(U8, "dmux0_on", null);
+				fine.add(port3, "port_3_in", null);
+				fine.add(U8, "dmux1_off", null);
+				fine.add(U8, "dmux1_on", null);
+				fine.add(U8, "led_clk", null);
+				fine.add(U8, "disp_seq_clk", null);
+				fine.add(U8, "atn_clk", null);
+				fine.add(U8, "ch_2_pa_clk", null);
+				fine.add(U8, "ch_1_pa_clk", null);
+				fine.add(U8, "b_swp_clk", null);
+				fine.add(U8, "a_swp_clk", null);
+				fine.add(U8, "b_trig_clk", null);
+				fine.add(U8, "a_trig_clk", null);
+				fine.add(U8, "trig_stat_strb", null);
+				coarse.add(array(fine, 4), "f", null);
 
-		ioRegion = new StructureDataType(PATH, "io", 0);
-		ioRegion.add(array(coarse, 4), "c", null);
+				ioRegion = new StructureDataType(PATH, "io", 0);
+				ioRegion.add(array(coarse, 4), "c", null);
+				break;
+			}
+
+			case TEK2465B_LATE: {
+				// The 2465B late version has a wholly different IO layout.
+				Structure fine = new StructureDataType(PATH, "f", 0);
+				fine.add(U8, "dac_msb_clk", null);
+				fine.add(U8, "dac_lsb_clk", null);
+				fine.add(port1, "port_1_clk", null);
+				fine.add(port2, "port_2_clk", null);
+				fine.add(port3, "port_3_clk", null);
+				fine.add(U8, "ros_1_clk", null);
+				fine.add(U8, "ros_2_clk", null);
+				fine.add(U8, "disp_sec_clk", null);
+				fine.add(U8, "attn_clk", null);
+				fine.add(U8, "ch_2_pa_clk", null);
+				fine.add(U8, "ch_1_pa_clk", null);
+				fine.add(U8, "b_swp_clk", null);
+				fine.add(U8, "a_swp_clk", null);
+				fine.add(U8, "b_trig_clk", null);
+				fine.add(U8, "a_trig_clk", null);
+				fine.add(U8, "trig_stat_strb", null);
+				var mirror = new StructureDataType(PATH, "m", 0);
+				mirror.add(array(create2465BLateCoarse("c0", "dmux0_off", fine), 2), "c0", null);
+				mirror.add(array(create2465BLateCoarse("c1", "dmux1_off", fine), 2), "c1", null);
+				mirror.add(array(create2465BLateCoarse("c2", "dmux2_off", fine), 2), "c2", null);
+				mirror.add(array(create2465BLateCoarse("c3", "unused", fine), 2), "c3", null);
+				ioRegion = new StructureDataType(PATH, "io", 0);
+				ioRegion.add(array(mirror, 2), "m", null);
+				break;
+			}
+			default:
+				ioRegion = null;
+				break;
+		}
 
 		port1Enum = new EnumDataType(PATH, "PORT1", 1);
 		port1Enum.add("MUX_MASK", 0x7);
@@ -167,6 +207,20 @@ public class DataTypes {
 			port1Enum.add("PAGE_SELECT", 0x10);
 		}
 		port1Enum.add("PWR_DOWN", 0x20);
+	}
+
+	private StructureDataType create2465BLateCoarse(String name, String muxFieldName,
+			Structure fine) {
+		var coarse = new StructureDataType(PATH, name, 0);
+		coarse.add(array(U8, 16), "port_4_clk", null);
+		coarse.add(array(U8, 16), "led_clk", null);
+		coarse.add(array(U8, 16), "ext_fp_clk", null);
+		coarse.add(array(U8, 16), "dmux0_on", null);
+		coarse.add(array(U8, 16), "dmux1_on", null);
+		coarse.add(array(U8, 16), "dmux2_on", null);
+		coarse.add(array(U8, 16), muxFieldName, null);
+		coarse.add(fine, "f", null);
+		return coarse;
 	}
 
 	public void addAll(DataTypeManager manager) {
