@@ -37,31 +37,89 @@ public class DataTypes {
 
 	// Types that are per scope type.
 	public final Structure ioRegion;
-	public final Enum port1;
+	public final Enum port1Enum;
 
 	public DataTypes(ScopeKind scopeKind) {
-		StructureDataType port_1 = new StructureDataType("p1", 0);
-		port_1.setPackingEnabled(true);
-		// TODO(siggi): Same treatment for port2 & 3.
+		StructureDataType port1 = new StructureDataType(PATH, "p1", 0);
+		port1.setPackingEnabled(true);
 		try {
-			port_1.addBitField(U8, 3, "mux_sel", null);
+			port1.addBitField(U8, 3, "mux_sel", null);
 			switch (scopeKind) {
 				case TEK2465:
-					port_1.addBitField(U8, 1, "ea_c", null);
-					port_1.addBitField(U8, 1, "ea_io", null);
-					port_1.addBitField(U8, 1, "pwr_down", null);
+					port1.addBitField(U8, 1, "ea_c", null);
+					port1.addBitField(U8, 1, "ea_io", null);
+					port1.addBitField(U8, 1, "pwr_down", null);
 					break;
 				case TEK2465A:
-					port_1.addBitField(U8, 1, "rom_select", null);
-					port_1.addBitField(U8, 1, "page_select", null);
-					port_1.addBitField(U8, 1, "pwr_down", null);
+					port1.addBitField(U8, 1, "rom_select", null);
+					port1.addBitField(U8, 1, "page_select", null);
+					port1.addBitField(U8, 1, "pwr_down", null);
 					break;
 				case TEK2465B:
 				case TEK2465B_LATE:
-					port_1.addBitField(U8, 1, "pgsel0", null);
-					port_1.addBitField(U8, 1, "pgsel1", null);
-					port_1.addBitField(U8, 1, "pwr_down", null);
-					port_1.addBitField(U8, 1, "pgsel2", null);
+					port1.addBitField(U8, 1, "pgsel0", null);
+					port1.addBitField(U8, 1, "pgsel1", null);
+					port1.addBitField(U8, 1, "pwr_down", null);
+					port1.addBitField(U8, 1, "pgsel2", null);
+					break;
+			}
+		}
+		catch (InvalidDataTypeException e) {
+			e.printStackTrace();
+		}
+
+		StructureDataType port2 = new StructureDataType(PATH, "p2", 0);
+		port2.setPackingEnabled(true);
+		try {
+			switch (scopeKind) {
+				case TEK2465:
+					port2.addBitField(U8, 1, "led_data", null);
+					port2.addBitField(U8, 1, "oea_clk", null);
+					port2.addBitField(U8, 1, "attn_strb", null);
+					port2.addBitField(U8, 1, "u2408_inh", null);
+					port2.addBitField(U8, 1, "u2418_inh", null);
+					port2.addBitField(U8, 1, "trig_led", null);
+					break;
+				case TEK2465A:
+				case TEK2465B:
+				case TEK2465B_LATE:
+					port2.addBitField(U8, 1, "led_data", null);
+					port2.addBitField(U8, 1, "u2501_inh", null);
+					port2.addBitField(U8, 1, "attn_strb", null);
+					port2.addBitField(U8, 1, "u2601_inh", null);
+					port2.addBitField(U8, 1, "u2401_inh", null);
+					port2.addBitField(U8, 1, "trig_led", null);
+					break;
+			}
+		}
+		catch (InvalidDataTypeException e) {
+			e.printStackTrace();
+		}
+
+		StructureDataType port3 = new StructureDataType(PATH, "p3", 0);
+		port3.setPackingEnabled(true);
+		try {
+			switch (scopeKind) {
+				case TEK2465:
+					port3.addBitField(U8, 1, "tso", null);
+					port3.addBitField(U8, 1, "comp", null);
+					port3.addBitField(U8, 1, "ro_do", null);
+					port3.addBitField(U8, 1, "ro_on", null);
+					port3.addBitField(U8, 1, "oea_out", null);
+					port3.addBitField(U8, 1, "mux_out", null);
+					break;
+				case TEK2465A:
+				case TEK2465B:
+				case TEK2465B_LATE:
+					// TODO(siggi): This needs verifying.
+					port3.addBitField(U8, 1, "tso", null);
+					port3.addBitField(U8, 1, "comp", null);
+					port3.addBitField(U8, 1, "ro_do", null);
+					port3.addBitField(U8, 1, "45_65_id", null);
+					port3.addBitField(U8, 1, "step_switch", null);
+					port3.addBitField(U8, 1, "mux_out", null);
+					port3.addBitField(U8, 1, "beam_find", null);
+					port3.addBitField(U8, 1, "65_67_id", null);
 					break;
 			}
 		}
@@ -75,17 +133,16 @@ public class DataTypes {
 		coarse.add(array(U8, 63), "dac_msb", null);
 		coarse.add(U16, "dac_full", null);
 		coarse.add(array(U8, 63), "dac_lsb", null);
-		// Create a bit field for port 1.
-		coarse.add(array(port_1, 64), "port_1_clk", null);
+		coarse.add(array(port1, 64), "port_1_clk", null);
 		coarse.add(array(U8, 64), "ros_1_clk", null);
 		coarse.add(array(U8, 64), "ros_2_clk", null);
-		coarse.add(array(U8, 64), "port_2_clk", null);
+		coarse.add(array(port2, 64), "port_2_clk", null);
 
-		Structure fine = new StructureDataType("f", 0);
+		Structure fine = new StructureDataType(PATH, "f", 0);
 		fine.add(U8, is2465 ? "unused" : "dmux2_on", null);
 		fine.add(U8, "dmux0_off", null);
 		fine.add(U8, "dmux0_on", null);
-		fine.add(U8, "port_3_in", null);
+		fine.add(port3, "port_3_in", null);
 		fine.add(U8, "dmux1_off", null);
 		fine.add(U8, "dmux1_on", null);
 		fine.add(U8, "led_clk", null);
@@ -101,20 +158,22 @@ public class DataTypes {
 		coarse.add(array(fine, 4), "f", null);
 
 		ioRegion = new StructureDataType(PATH, "io", 0);
-		ioRegion.add(array(coarse, 4));
+		ioRegion.add(array(coarse, 4), "c", null);
 
-		port1 = new EnumDataType(PATH, "Port1", 1);
-		port1.add("MUX_MASK", 0x7);
-		port1.add("ROM_SELECT", 0x8);
-		port1.add("PAGE_SELECT", 0x10);
-		port1.add("PWR_DOWN", 0x20);
+		port1Enum = new EnumDataType(PATH, "PORT1", 1);
+		port1Enum.add("MUX_MASK", 0x7);
+		if (is2465) {
+			port1Enum.add("ROM_SELECT", 0x8);
+			port1Enum.add("PAGE_SELECT", 0x10);
+		}
+		port1Enum.add("PWR_DOWN", 0x20);
 	}
 
 	public void addAll(DataTypeManager manager) {
 		var c = manager.createCategory(PATH);
 		c.addDataType(ROM_HEADER, null);
 		c.addDataType(ioRegion, null);
-		c.addDataType(port1, null);
+		c.addDataType(port1Enum, null);
 	}
 
 	private static Array array(DataType d, int size) {
