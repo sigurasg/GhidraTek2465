@@ -25,48 +25,48 @@ public class ROMHeader {
 		reader.setPointerIndex(index);
 
 		checksum = reader.readNextUnsignedShort();
-		part_number = reader.readNextUnsignedShort();
+		partNumber = reader.readNextUnsignedShort();
 		version = reader.readNextUnsignedByte();
-		version_compl = reader.readNextUnsignedByte();
-		load_addr = reader.readNextUnsignedByte();
-		tail_checksum = reader.readNextUnsignedShort();
-		rom_end = reader.readNextUnsignedShort();
-		next_rom = reader.readNextUnsignedShort();
-		zero_effeff = reader.readNextUnsignedShort();
+		versionCompl = reader.readNextUnsignedByte();
+		loadAddr = reader.readNextUnsignedByte();
+		tailChecksum = reader.readNextUnsignedShort();
+		romEnd = reader.readNextUnsignedShort();
+		nextRom = reader.readNextUnsignedShort();
+		signature = reader.readNextUnsignedShort();
 	}
 
 	boolean isValid() {
-		if ((version ^ version_compl) != 0xFF || zero_effeff != 0x00FF) {
+		if ((version ^ versionCompl) != 0xFF || signature != 0x00FF) {
 			return false;
 		}
 		return true;
 	}
 
 	int getLoadAddress() {
-		return load_addr << 8;
+		return loadAddr << 8;
 	}
 
 	int getByteSize() {
-		return rom_end + 1 - getLoadAddress();
+		return romEnd + 1 - getLoadAddress();
 	}
 
 	// ROM header fields.
 	// Checksum over the bytes after this field.
 	final int checksum;
 	// The part number encoded in hex, e.g. 0x3302 for 3302.
-	final int part_number;
+	final int partNumber;
 	// The firmware version.
 	final int version;
 	// Complement of the previous field.
-	final int version_compl;
+	final int versionCompl;
 	// The upper byte of the ROM load address.
-	final int load_addr;
+	final int loadAddr;
 	// Checksum over the bytes after this field.
-	final int tail_checksum;
+	final int tailChecksum;
 	// The last byte of this ROM.
-	final int rom_end;
+	final int romEnd;
 	// The address of the next ROM, if any.
-	final int next_rom;
+	final int nextRom;
 	// Fixed value - maybe a signature?
-	final int zero_effeff;
+	final int signature;
 }

@@ -46,13 +46,13 @@ public class ROMHeaderTest {
 			0);
 
 		assertEquals(h.checksum, 0x1234);
-		assertEquals(h.part_number, 0x3302);
+		assertEquals(h.partNumber, 0x3302);
 		assertEquals(h.version, 0x06);
-		assertEquals(h.version_compl, 0xF9);
-		assertEquals(h.load_addr, 0x80);
-		assertEquals(h.rom_end, 0xFFFF);
-		assertEquals(h.next_rom, 0x0000);
-		assertEquals(h.zero_effeff, 0x00FF);
+		assertEquals(h.versionCompl, 0xF9);
+		assertEquals(h.loadAddr, 0x80);
+		assertEquals(h.romEnd, 0xFFFF);
+		assertEquals(h.nextRom, 0x0000);
+		assertEquals(h.signature, 0x00FF);
 
 		assertTrue(h.isValid());
 		assertEquals(h.getLoadAddress(), 0x8000);

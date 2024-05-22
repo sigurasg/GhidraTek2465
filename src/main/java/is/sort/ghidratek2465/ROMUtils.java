@@ -95,7 +95,7 @@ public class ROMUtils {
 	}
 
 	public static boolean isOverlay(ROMHeader header) {
-		switch (scopeKindFromPartNumber(header.part_number)) {
+		switch (scopeKindFromPartNumber(header.partNumber)) {
 			case TEK2465:
 				return false;
 

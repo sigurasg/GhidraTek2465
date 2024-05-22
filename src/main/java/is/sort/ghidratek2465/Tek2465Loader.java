@@ -100,7 +100,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			// Infer the scope kind from the first ROM header.
 			var headers = ROMUtils.findValidRomHeaders(provider);
 			ROMHeader header = new ROMHeader(provider, headers[0]);
-			scopeKind = ROMUtils.scopeKindFromPartNumber(header.part_number);
+			scopeKind = ROMUtils.scopeKindFromPartNumber(header.partNumber);
 		}
 		catch (IOException e) {
 		}
@@ -112,16 +112,6 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 
 		return list;
-	}
-
-	@Override
-	public String validateOptions(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			Program program) {
-
-		// TODO: If this loader has custom options, validate them here.  Not all options require
-		// validation.
-
-		return super.validateOptions(provider, loadSpec, options, program);
 	}
 
 	@Override
@@ -192,7 +182,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			var headers = ROMUtils.findValidRomHeaders(provider);
 			// Derive the designator from the first (and possibly only) header.
 			ROMHeader header = new ROMHeader(provider, headers[0]);
-			String designator = ROMUtils.designatorFromPartNumber(header.part_number);
+			String designator = ROMUtils.designatorFromPartNumber(header.partNumber);
 
 			for (int i = 0; i < headers.length; ++i) {
 				int offset = headers[i];
@@ -218,10 +208,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
 					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
-				ProcessVector(program, blk, 0xFFFE, "RST");
-				ProcessVector(program, blk, 0xFFFC, "NMI");
-				ProcessVector(program, blk, 0xFFFA, "SWI");
-				ProcessVector(program, blk, 0xFFF8, "IRQ");
+				maybeAddProcessorVectors(program, blk);
 			}
 		}
 		catch (Exception e) {
@@ -243,7 +230,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		blk.setVolatile(true);
 		createData(program, blk.getStart(), dataTypes != null ? dataTypes.ioRegion : null, -1,
 			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-		program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.ANALYSIS);
+		program.getSymbolTable().createLabel(blk.getStart(), "io", SourceType.IMPORTED);
 
 		switch (scopeKind) {
 			case TEK2465:
@@ -266,6 +253,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 
 		// Create the options space.
+		blk = null;
 		switch (scopeKind) {
 			case TEK2465:
 			case TEK2465A:
@@ -277,20 +265,33 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				blk = memory.createUninitializedBlock("Options", as.getAddress(0x2000), 0x6000,
 					false);
 				break;
+
+			default:
+				break;
 		}
-		blk.setPermissions(true, true, true);
+		if (blk != null) {
+			blk.setPermissions(true, true, true);
+		}
 	}
 
-	private void ProcessVector(Program program, MemoryBlock blk, int address, String name)
+	private void maybeAddProcessorVectors(Program program, MemoryBlock blk)
 			throws Exception {
-		AddressSpace ovl = blk.getAddressRange().getAddressSpace();
-		Address addr = ovl.getAddress(address);
+		addProcessorVector(program, blk, 0xFFFE, "RST");
+		addProcessorVector(program, blk, 0xFFFC, "NMI");
+		addProcessorVector(program, blk, 0xFFFA, "SWI");
+		addProcessorVector(program, blk, 0xFFF8, "IRQ");
+	}
+
+	private void addProcessorVector(Program program, MemoryBlock blk, long loc, String name)
+			throws Exception {
+		AddressSpace space = blk.getAddressRange().getAddressSpace();
+		Address addr = space.getAddress(loc);
 		if (blk.contains(addr)) {
 			createData(program, addr, DataTypes.PTR, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-			program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.ANALYSIS);
+			program.getSymbolTable().createLabel(addr, name + "_VECTOR", SourceType.IMPORTED);
 			markAsFunction(program, name + "_" + blk.getName(),
-				ovl.getAddress(program.getMemory().getShort(addr)));
+				space.getAddress(program.getMemory().getShort(addr)));
 		}
-	}
 
+	}
 }
