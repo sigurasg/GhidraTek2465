@@ -131,18 +131,21 @@ public class ROMUtils {
 			return false;
 		}
 
-		if (checksumRange(provider, offset + 0x0002, h.getByteSize() - 0x0002) != h.checksum) {
-			return false;
+		// Apparently there are cases where the primary checksum is invalid, but then
+		// the tail checksum is fine, so we succeed if either checksum is good.
+		// This specifically refers to the TekWiki image of 160-5370-04, but then it
+		// also embeds the wrong part number so YMMV.
+		if (checksumRange(provider, offset + 0x0002, h.getByteSize() - 0x0002) == h.checksum) {
+			return true;
 		}
 
-		/* This doesn't work for the TekWiki image of 160-5876-01. The secondary
-		 * checksum doesn't match for whatever reason.
-		if (h.tail_checksum != 0 &&
-			checksumRange(provider, offset + 0x0009, h.getByteSize() - 0x0009) != h.tail_checksum) {
-			return false;
+		if (h.tailChecksum != 0 &&
+			checksumRange(provider, offset + 0x0009,
+				h.getByteSize() - 0x0009) == h.tailChecksum) {
+			return true;
 		}
-		*/
-		return true;
+
+		return false;
 	}
 
 	/*
