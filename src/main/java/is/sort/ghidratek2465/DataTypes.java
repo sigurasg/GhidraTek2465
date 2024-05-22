@@ -186,13 +186,18 @@ public class DataTypes {
 				fine.add(U8, "b_trig_clk", null);
 				fine.add(U8, "a_trig_clk", null);
 				fine.add(U8, "trig_stat_strb", null);
-				var mirror = new StructureDataType(PATH, "m", 0);
-				mirror.add(array(create2465BLateCoarse("c0", "dmux0_off", fine), 2), "c0", null);
-				mirror.add(array(create2465BLateCoarse("c1", "dmux1_off", fine), 2), "c1", null);
-				mirror.add(array(create2465BLateCoarse("c2", "dmux2_off", fine), 2), "c2", null);
-				mirror.add(array(create2465BLateCoarse("c3", "unused", fine), 2), "c3", null);
+
+				var coarse = new StructureDataType(PATH, "c", 0);
+				coarse.add(array(U8, 16), "port_4_clk", null);
+				coarse.add(array(U8, 16), "led_clk", null);
+				coarse.add(array(U8, 16), "ext_fp_clk", null);
+				coarse.add(array(U8, 16), "dmux0_on", null);
+				coarse.add(array(U8, 16), "dmux1_on", null);
+				coarse.add(array(U8, 16), "dmux2_on", null);
+				coarse.add(array(U8, 16), "dmux_off", null);
+				coarse.add(fine, "f", null);
 				ioRegion = new StructureDataType(PATH, "io", 0);
-				ioRegion.add(array(mirror, 2), "m", null);
+				ioRegion.add(array(coarse, 8), "m", null);
 				break;
 			}
 			default:
@@ -207,20 +212,6 @@ public class DataTypes {
 			port1Enum.add("PAGE_SELECT", 0x10);
 		}
 		port1Enum.add("PWR_DOWN", 0x20);
-	}
-
-	private StructureDataType create2465BLateCoarse(String name, String muxFieldName,
-			Structure fine) {
-		var coarse = new StructureDataType(PATH, name, 0);
-		coarse.add(array(U8, 16), "port_4_clk", null);
-		coarse.add(array(U8, 16), "led_clk", null);
-		coarse.add(array(U8, 16), "ext_fp_clk", null);
-		coarse.add(array(U8, 16), "dmux0_on", null);
-		coarse.add(array(U8, 16), "dmux1_on", null);
-		coarse.add(array(U8, 16), "dmux2_on", null);
-		coarse.add(array(U8, 16), muxFieldName, null);
-		coarse.add(fine, "f", null);
-		return coarse;
 	}
 
 	public void addAll(DataTypeManager manager) {
