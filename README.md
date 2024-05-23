@@ -2,6 +2,8 @@
 
 A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
 
+![Disassembly](screenshot.png)
+
 ## Features
 
 * MC6800 support for Sleigh.
