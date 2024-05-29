@@ -13,11 +13,14 @@
 // limitations under the License.
 package is.sort.ghidratek2465;
 
+import ghidra.app.cmd.disassemble.DisassembleCommand;
 import ghidra.app.services.AbstractAnalyzer;
 import ghidra.app.services.AnalyzerType;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.framework.options.Options;
+import ghidra.program.database.function.OverlappingFunctionException;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressSet;
 import ghidra.program.model.address.AddressSetView;
 import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Function;
@@ -27,7 +30,9 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
+import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
@@ -100,12 +105,12 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		// See whether the first instruction is "JSR".
 		Program program = f.getProgram();
 		Listing listing = program.getListing();
-		Instruction paging_call = listing.getInstructionAt(f.getEntryPoint());
-		if (paging_call == null || !paging_call.getMnemonicString().equals("JSR")) {
+		Instruction pagingCall = listing.getInstructionAt(f.getEntryPoint());
+		if (pagingCall == null || !pagingCall.getMnemonicString().equals("JSR")) {
 			return;
 		}
 		// Lookup the callee function.
-		var refs = paging_call.getOperandReferences(0);
+		var refs = pagingCall.getOperandReferences(0);
 		if (refs.length != 1) {
 			return;
 		}
@@ -119,34 +124,56 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		}
 
 		// Resolve the tail of the function name to the destination memory block.
-		String dest_page = callee.getName().substring(5);
+		String destPage = callee.getName().substring(5);
 		Memory memory = program.getMemory();
-		MemoryBlock block = memory.getBlock(dest_page);
+		MemoryBlock block = memory.getBlock(destPage);
 		if (block == null) {
 			return;
 		}
 
 		// Construct the address of the fallthrough instruction in the
 		// destination address space.
-		Address dest_addr =
+		Address destAddr =
 			block.getAddressRange()
 					.getAddressSpace()
-					.getAddress(paging_call.getFallThrough().getOffset());
+					.getAddress(pagingCall.getFallThrough().getOffset());
 
-		Instruction service_call = listing.getInstructionAt(dest_addr);
-		if (service_call == null || !service_call.getMnemonicString().equals("JSR")) {
+		Instruction serviceCall = listing.getInstructionAt(destAddr);
+		if (serviceCall == null) {
+			// Mark destAddr for disassembly.
+			DisassembleCommand cmd =
+				new DisassembleCommand(new AddressSet(destAddr, destAddr), null, true);
+			cmd.applyTo(program, monitor);
+		}
+
+		// Try again (is this how it works?).
+		serviceCall = listing.getInstructionAt(destAddr);
+		if (serviceCall == null) {
+			return;
+		}
+		if (!serviceCall.getMnemonicString().equals("JSR")) {
 			return;
 		}
 
-		refs = service_call.getOperandReferences(0);
+		refs = serviceCall.getOperandReferences(0);
 		if (refs.length != 1) {
 			return;
 		}
 
 		// Get the service function.
-		Function service = functionManager.getFunctionAt(refs[0].getToAddress());
+		Address serviceAddress = refs[0].getToAddress();
+		Function service = functionManager.getFunctionAt(serviceAddress);
 		if (service == null) {
-			return;
+			// Try to create a marker for the service function.
+			try {
+				service = functionManager.createFunction(null, serviceAddress,
+					new AddressSet(serviceAddress, serviceAddress),
+					SourceType.ANALYSIS);
+			}
+			catch (InvalidInputException | OverlappingFunctionException e) {
+				log.appendException(e);
+				return;
+			}
 		}
 
 		// Success, set the service function.
