@@ -52,8 +52,11 @@ import ghidra.util.task.TaskMonitor;
  * the destination page.
  */
 public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
+	private static final String OPTION_REPROCESS_THUNKS = "Reprocess existing thunks";
+	private static final String OPTION_MARK_PAGE_CALLER_FUNCTIONS =
+		"Mark all callers of PAGE_* as functions";
+
 	public Tek2465PagingThunkAnalyzer() {
-		// TODO: Name the analyzer and give it a description.
 		super("Tek2465 Thunk Resolver",
 			"Converts Tek2465 ROM paging functions to thunks pointing to the service function.",
 			AnalyzerType.FUNCTION_ANALYZER);
@@ -78,27 +81,53 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public void registerOptions(Options options, Program program) {
+		options.registerOption(OPTION_REPROCESS_THUNKS, reprocessThunks, null,
+			"Reprocess existing thunks.");
+		options.registerOption(OPTION_MARK_PAGE_CALLER_FUNCTIONS, markPageCallersAsFunctions, null,
+			"Mark all callers of PAGE_* functions as functions themselves.");
+	}
 
-		// TODO: If this analyzer has custom options, register them here
-		// TODO: Maybe add an option to also process existing thunks?
-		options.registerOption("Option name goes here", false, null,
-			"Option description goes here");
+	@Override
+	public void optionsChanged(Options options, Program program) {
+		reprocessThunks = options.getBoolean(OPTION_REPROCESS_THUNKS, reprocessThunks);
+		markPageCallersAsFunctions =
+			options.getBoolean(OPTION_MARK_PAGE_CALLER_FUNCTIONS, markPageCallersAsFunctions);
 	}
 
 	@Override
 	public boolean added(Program program, AddressSetView set, TaskMonitor monitor, MessageLog log)
 			throws CancelledException {
-
 		var functions = program.getFunctionManager().getFunctionsOverlapping(set);
-		functions.forEachRemaining(f -> maybeConvertPagingFunctionToThunk(f, monitor, log));
+		functions.forEachRemaining(f -> processFunction(f, monitor, log));
 
 		return true;
 	}
 
+	private void processFunction(Function f, TaskMonitor monitor,
+			MessageLog log) {
+		if (f.getName().startsWith("PAGE_") && markPageCallersAsFunctions) {
+			markCallersAsFunctions(f, monitor, log);
+		}
+
+		maybeConvertPagingFunctionToThunk(f, monitor, log);
+	}
+
+	private void markCallersAsFunctions(Function f, TaskMonitor monitor, MessageLog log) {
+		var program = f.getProgram();
+		var referenceManager = program.getReferenceManager();
+		var functionManager = program.getFunctionManager();
+
+		for (var ref : referenceManager.getReferencesTo(f.getEntryPoint())) {
+			if (ref.getReferenceType().isCall()) {
+				getOrMarkAsFunction(ref.getFromAddress(), functionManager, log);
+			}
+		}
+	}
+
 	private void maybeConvertPagingFunctionToThunk(Function f, TaskMonitor monitor,
 			MessageLog log) {
-		// Don't process functions that are already thunks.
-		if (f.isThunk()) {
+		// Don't process functions that are already thunks, unless explicitly set to do so.
+		if (!reprocessThunks && f.isThunk()) {
 			return;
 		}
 
@@ -140,10 +169,12 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 
 		Instruction serviceCall = listing.getInstructionAt(destAddr);
 		if (serviceCall == null) {
-			// Mark destAddr for disassembly.
-			DisassembleCommand cmd =
-				new DisassembleCommand(new AddressSet(destAddr, destAddr), null, true);
+			// Initiate dissassembly at destAddr.
+			DisassembleCommand cmd = new DisassembleCommand(destAddr, null, true);
 			cmd.applyTo(program, monitor);
+			// Just return here as the disassembly is asynchronous.
+			// TODO(siggi): How to schedule a revisit of this function?
+			return;
 		}
 
 		// Try again (is this how it works?).
@@ -162,21 +193,30 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 
 		// Get the service function.
 		Address serviceAddress = refs[0].getToAddress();
-		Function service = functionManager.getFunctionAt(serviceAddress);
-		if (service == null) {
-			// Try to create a marker for the service function.
+		Function service = getOrMarkAsFunction(serviceAddress, functionManager, log);
+		if (service != null) {
+			// Success, set the service function.
+			f.setThunkedFunction(service);
+		}
+	}
+
+	private Function getOrMarkAsFunction(Address serviceAddress, FunctionManager functionManager,
+			MessageLog log) {
+		Function function = functionManager.getFunctionAt(serviceAddress);
+		if (function == null) {
 			try {
-				service = functionManager.createFunction(null, serviceAddress,
+				function = functionManager.createFunction(null, serviceAddress,
 					new AddressSet(serviceAddress, serviceAddress),
 					SourceType.ANALYSIS);
 			}
 			catch (InvalidInputException | OverlappingFunctionException e) {
 				log.appendException(e);
-				return;
 			}
 		}
 
-		// Success, set the service function.
-		f.setThunkedFunction(service);
+		return function;
 	}
+
+	boolean reprocessThunks = false;
+	boolean markPageCallersAsFunctions = true;
 }
