@@ -16,10 +16,11 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
   - The different scope versions have different IO register layouts.
 * Creates typed symbols for the ROM headers
 * Tags the code pointed to by the vector table as functions for analysis.
- 
-## TODO
-
-* Implement an analyzer to unfurl bank switching.
+* Analyzes banking thunks and propagates disassembly across banks.
+* Sets the destination of a banking thunk to the service function,
+  which aids analysis. When the decompiler encounters a thunk, it displays
+  the ultimate destination of a thunk or a series of thunks, rather than
+  showing the thunk as the destination.
 
 ## How to install
 1. Download a [prebuilt GhidraTek2465 release](https://github.com/sigurasg/GhidraTek2465/releases), or build it yourself.

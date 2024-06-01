@@ -41,30 +41,42 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * This analyzer sets the thunk function of ROM paging functions to the service
- * function by looking at the JSR instruction in the destination page.
- * This relies on teh convention that paging functions are named with the prefix
- * "PAGE_" suffixed with the name of the destination memory block. Example
- * "PAGE_U2160-0".
+ * This analyzer sets the thunk function of ROM banking thunks to the ultimate service
+ * function by looking at the listing in the destination page. This greatly aids reversing,
+ * as the decompiler will display the ultimate destination function, rather than the
+ * banking thunk.
  *
- * The paging functions must be of the form
- *   JSR PAGE_<dest page>
+ * This implementation relies on the convention that banking functions be named with
+ * the prefix "BANK_" suffixed with the name of the destination memory block.
+ * Example:
+ *   "BANK_U2160-0".
+ *
+ * The banking functions must be of the form
+ *   JSR BANK_<dest bank>
+ *
+ * or in the case of the 2465B (early and late):
+ *   DES
+ *   JSR BANK_<dest bank>
  *
  * and the destination page must contain
  *   JSR SERVICE_FUNCTION
  *
- * at the address immediately succeeding the JSR PAGE_ instruction, in the
+ * at the address immediately succeeding the JSR BANK_ instruction in the
  * the destination page.
+ *
+ * This analyzer can also walk back to references to any BANK_* function and
+ * mark the (supposed) banking thunk as function, which helps auto analysis
+ * move forward.
  */
-public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
+public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 	private static final String OPTION_SCOPE_KIND = "Scope kind";
 	private static final String OPTION_REPROCESS_THUNKS = "Reprocess existing thunks";
-	private static final String OPTION_MARK_PAGE_CALLER_FUNCTIONS =
-		"Mark all callers of PAGE_* as functions";
+	private static final String OPTION_MARK_BANK_CALLER_FUNCTIONS =
+		"Mark all callers of BANK_* as functions";
 
-	public Tek2465PagingThunkAnalyzer() {
+	public Tek2465BankingAnalyzer() {
 		super("Tek2465 Thunk Resolver",
-			"Converts Tek2465 ROM paging functions to thunks pointing to the service function.",
+			"Converts Tek2465 ROM banking functions to thunks pointing to the service function.",
 			AnalyzerType.FUNCTION_ANALYZER);
 
 		setSupportsOneTimeAnalysis(true);
@@ -83,7 +95,7 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		}
 		scopeKind = getScopeKindFromProgram(program);
 		if (scopeKind == ScopeKind.UNKNOWN || scopeKind == ScopeKind.TEK2465) {
-			// There's no paging on the 2465.
+			// There's no banking on the 2465.
 			return false;
 		}
 
@@ -96,16 +108,16 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		options.registerOption(OPTION_SCOPE_KIND, scopeKind, null, "Scope Kind.");
 		options.registerOption(OPTION_REPROCESS_THUNKS, reprocessThunks, null,
 			"Reprocess existing thunks.");
-		options.registerOption(OPTION_MARK_PAGE_CALLER_FUNCTIONS, markPageCallersAsFunctions, null,
-			"Mark all callers of PAGE_* functions as functions themselves.");
+		options.registerOption(OPTION_MARK_BANK_CALLER_FUNCTIONS, markBankCallersAsFunctions, null,
+			"Mark all callers of BANK_* functions as functions themselves.");
 	}
 
 	@Override
 	public void optionsChanged(Options options, Program program) {
 		scopeKind = options.getEnum(OPTION_SCOPE_KIND, scopeKind);
 		reprocessThunks = options.getBoolean(OPTION_REPROCESS_THUNKS, reprocessThunks);
-		markPageCallersAsFunctions =
-			options.getBoolean(OPTION_MARK_PAGE_CALLER_FUNCTIONS, markPageCallersAsFunctions);
+		markBankCallersAsFunctions =
+			options.getBoolean(OPTION_MARK_BANK_CALLER_FUNCTIONS, markBankCallersAsFunctions);
 	}
 
 	@Override
@@ -113,6 +125,7 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 		var functions = program.getFunctionManager().getFunctionsOverlapping(set);
 
+		// Keep track of any functions that need to be revisited later.
 		AddressSet toRevisit = new AddressSet();
 		functions.forEachRemaining(f -> {
 			if (processFunction(f, monitor, log)) {
@@ -158,11 +171,11 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 
 	private boolean processFunction(Function f, TaskMonitor monitor,
 			MessageLog log) {
-		if (f.getName().startsWith("PAGE_") && markPageCallersAsFunctions) {
+		if (f.getName().startsWith("BANK_") && markBankCallersAsFunctions) {
 			markCallersAsFunctions(f, monitor, log);
 		}
 
-		return maybeConvertPagingFunctionToThunk(f, monitor, log);
+		return maybeConvertBankingFunctionToThunk(f, monitor, log);
 	}
 
 	private void markCallersAsFunctions(Function f, TaskMonitor monitor, MessageLog log) {
@@ -174,12 +187,12 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 			if (ref.getReferenceType().isCall()) {
 				Address callAddress = ref.getFromAddress();
 				if (scopeKind != ScopeKind.TEK2465A) {
-					// The paging thunks in the early and late Bs start with a DES
+					// The banking thunks in the early and late Bs start with a DES
 					// instruction.
 					callAddress = callAddress.subtract(1);
 				}
 
-				getOrMarkAsFunction(callAddress, functionManager, log);
+				markOrGetFunction(callAddress, functionManager, log);
 			}
 		}
 	}
@@ -187,7 +200,7 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 	/*
 	 * Returns true if this needs to re-run.
 	 */
-	private boolean maybeConvertPagingFunctionToThunk(Function f, TaskMonitor monitor,
+	private boolean maybeConvertBankingFunctionToThunk(Function f, TaskMonitor monitor,
 			MessageLog log) {
 		// Don't process functions that are already thunks, unless explicitly set to do so.
 		if (!reprocessThunks && f.isThunk()) {
@@ -199,7 +212,7 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		Listing listing = program.getListing();
 		FunctionManager functionManager = program.getFunctionManager();
 
-		Address destAddr = getPagingFunctionDestAddr(f, log);
+		Address destAddr = getBankingFunctionDestAddr(f, log);
 		if (destAddr == null) {
 			return false;
 		}
@@ -210,7 +223,7 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 			DisassembleCommand cmd = new DisassembleCommand(destAddr, null, true);
 			cmd.applyTo(program, monitor);
 			// Just return here as the disassembly is asynchronous, but
-			// ask caller to reschedule visiting this function.
+			// ask the caller to reschedule visiting this function.
 			return true;
 		}
 
@@ -229,7 +242,7 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 
 		// Get the service function.
 		Address serviceAddress = refs[0].getToAddress();
-		Function service = getOrMarkAsFunction(serviceAddress, functionManager, log);
+		Function service = markOrGetFunction(serviceAddress, functionManager, log);
 		if (service != null) {
 			// Success, set the service function.
 			f.setThunkedFunction(service);
@@ -238,7 +251,11 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		return false;
 	}
 
-	private Address getPagingFunctionDestAddr(Function f, MessageLog log) {
+	/*
+	 * For a banking function f, returns the address of the call to the service
+	 * function in the destination bank. Returns null if f is not a banking function.
+	 */
+	private Address getBankingFunctionDestAddr(Function f, MessageLog log) {
 		Program program = f.getProgram();
 		Listing listing = program.getListing();
 
@@ -252,12 +269,12 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 			instructionAddr = des.getFallThrough();
 		}
 
-		Instruction pagingCall = listing.getInstructionAt(instructionAddr);
-		if (pagingCall == null || !pagingCall.getMnemonicString().equals("JSR")) {
+		Instruction bankingCall = listing.getInstructionAt(instructionAddr);
+		if (bankingCall == null || !bankingCall.getMnemonicString().equals("JSR")) {
 			return null;
 		}
 		// Lookup the callee function.
-		var refs = pagingCall.getOperandReferences(0);
+		var refs = bankingCall.getOperandReferences(0);
 		if (refs.length != 1) {
 			return null;
 		}
@@ -265,33 +282,33 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 		if (callee == null) {
 			return null;
 		}
-		if (!callee.getName().startsWith("PAGE_")) {
+		if (!callee.getName().startsWith("BANK_")) {
 			return null;
 		}
 
 		// Resolve the tail of the function name to the destination memory block.
-		String destPage = callee.getName().substring(5);
+		String destBank = callee.getName().substring(5);
 		Memory memory = program.getMemory();
-		MemoryBlock block = memory.getBlock(destPage);
+		MemoryBlock block = memory.getBlock(destBank);
 		if (block == null) {
-			log.appendMsg("Not a memory page: " + destPage);
+			log.appendMsg("Not a memory page: " + destBank);
 			return null;
 		}
 
-		// Construct the address of the fallthrough instruction in the
+		// Construct the address of the fall through instruction in the
 		// destination address space.
 		return block.getAddressRange()
 				.getAddressSpace()
-				.getAddress(pagingCall.getFallThrough().getOffset());
+				.getAddress(bankingCall.getFallThrough().getOffset());
 	}
 
-	private Function getOrMarkAsFunction(Address serviceAddress, FunctionManager functionManager,
+	private Function markOrGetFunction(Address entryPoint, FunctionManager functionManager,
 			MessageLog log) {
-		Function function = functionManager.getFunctionContaining(serviceAddress);
+		Function function = functionManager.getFunctionAt(entryPoint);
 		if (function == null) {
 			try {
-				function = functionManager.createFunction(null, serviceAddress,
-					new AddressSet(serviceAddress, serviceAddress),
+				function = functionManager.createFunction(null, entryPoint,
+					new AddressSet(entryPoint, entryPoint),
 					SourceType.ANALYSIS);
 			}
 			catch (InvalidInputException | OverlappingFunctionException e) {
@@ -303,6 +320,6 @@ public class Tek2465PagingThunkAnalyzer extends AbstractAnalyzer {
 	}
 
 	private boolean reprocessThunks = false;
-	private boolean markPageCallersAsFunctions = true;
+	private boolean markBankCallersAsFunctions = true;
 	private ScopeKind scopeKind = ScopeKind.UNKNOWN;
 }
