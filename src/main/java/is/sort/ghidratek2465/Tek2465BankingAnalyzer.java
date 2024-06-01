@@ -42,7 +42,7 @@ import ghidra.util.task.TaskMonitor;
 
 /**
  * This analyzer sets the thunk function of ROM banking thunks to the ultimate service
- * function by looking at the listing in the destination page. This greatly aids reversing,
+ * function by looking at the listing in the destination bank. This greatly aids reversing,
  * as the decompiler will display the ultimate destination function, rather than the
  * banking thunk.
  *
@@ -58,11 +58,11 @@ import ghidra.util.task.TaskMonitor;
  *   DES
  *   JSR BANK_<dest bank>
  *
- * and the destination page must contain
+ * and the destination bank must contain
  *   JSR SERVICE_FUNCTION
  *
  * at the address immediately succeeding the JSR BANK_ instruction in the
- * the destination page.
+ * the destination bank.
  *
  * This analyzer can also walk back to references to any BANK_* function and
  * mark the (supposed) banking thunk as function, which helps auto analysis
@@ -75,7 +75,7 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 		"Mark all callers of BANK_* as functions";
 
 	public Tek2465BankingAnalyzer() {
-		super("Tek2465 Thunk Resolver",
+		super("Tek2465 Banking Analyzer",
 			"Converts Tek2465 ROM banking functions to thunks pointing to the service function.",
 			AnalyzerType.FUNCTION_ANALYZER);
 
@@ -291,7 +291,7 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 		Memory memory = program.getMemory();
 		MemoryBlock block = memory.getBlock(destBank);
 		if (block == null) {
-			log.appendMsg("Not a memory page: " + destBank);
+			log.appendMsg("Not a memory block: " + destBank);
 			return null;
 		}
 
