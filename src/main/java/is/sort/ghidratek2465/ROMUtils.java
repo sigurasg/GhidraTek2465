@@ -20,9 +20,25 @@ import java.util.List;
 import ghidra.app.util.bin.ByteProvider;
 
 public class ROMUtils {
-	// Find the scope kind from part number.
-	public static ScopeKind scopeKindFromPartNumber(int part_number) {
-		switch (part_number) {
+	// Get the human readable name of @p kind.
+	public static String getScopeKindName(ScopeKind kind) {
+		switch (kind) {
+			case TEK2465:
+				return "Tek2465";
+			case TEK2465A:
+				return "Tek2465A";
+			case TEK2465B:
+				return "Tek2465B";
+			case TEK2465B_LATE:
+				return "Tek2465B SN>B050000";
+			default:
+				return "Unknown";
+		}
+	}
+
+	// Find the scope kind from @p partNumber.
+	public static ScopeKind scopeKindFromPartNumber(int partNumber) {
+		switch (partNumber) {
 			case 0x1625:
 			case 0x1626:
 			case 0x1627:
@@ -46,9 +62,9 @@ public class ROMUtils {
 		}
 	}
 
-	// Find the component designator from the part number.
-	public static String designatorFromPartNumber(int part_number) {
-		switch (part_number) {
+	// Find the component designator from the @p partNumber.
+	public static String designatorFromPartNumber(int partNumber) {
+		switch (partNumber) {
 			case 0x1625:
 				return "U2178";
 			case 0x1626:
@@ -78,22 +94,6 @@ public class ROMUtils {
 		}
 	}
 
-	// Get the human readable name of a scope kind.
-	public static String getScopeKindName(ScopeKind kind) {
-		switch (kind) {
-			case TEK2465:
-				return "Tek2465";
-			case TEK2465A:
-				return "Tek2465A";
-			case TEK2465B:
-				return "Tek2465B";
-			case TEK2465B_LATE:
-				return "Tek2465B SN>B050000";
-			default:
-				return "Unknown";
-		}
-	}
-
 	public static boolean isOverlay(ROMHeader header) {
 		switch (scopeKindFromPartNumber(header.partNumber)) {
 			case TEK2465:
@@ -111,7 +111,9 @@ public class ROMUtils {
 		}
 	}
 
-	// Computes the checksum of the next `length` bytes in `str`.
+	/*
+	 * Computes the checksum of the next @p length bytes from @p offset in @p provider.
+	 */
 	static int checksumRange(ByteProvider provider, int offset, int length) throws IOException {
 		byte[] data = provider.readBytes(offset, length);
 		int checksum = 0;
@@ -124,7 +126,7 @@ public class ROMUtils {
 		return checksum;
 	}
 
-	// Returns true iff @str has a ROM header with a valid checksum.
+	// Returns true iff @provider has a ROM header with a valid checksum at @p offset.
 	static boolean hasValidHeaderAt(ByteProvider provider, int offset) throws IOException {
 		ROMHeader h = new ROMHeader(provider, offset);
 		if (!h.isValid()) {
