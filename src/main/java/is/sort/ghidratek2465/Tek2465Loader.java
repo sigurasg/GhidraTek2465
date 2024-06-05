@@ -184,8 +184,8 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			ROMHeader header = new ROMHeader(provider, headers[0]);
 			String designator = ROMUtils.designatorFromPartNumber(header.partNumber);
 
-			for (int i = 0; i < headers.length; ++i) {
-				int offset = headers[i];
+			for (int bank = 0; bank < headers.length; ++bank) {
+				int offset = headers[bank];
 				header = new ROMHeader(provider, offset);
 
 				// Find the load address for this page.
@@ -198,7 +198,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 					name = designator;
 				}
 				else {
-					name = "%s-%d".formatted(designator, i);
+					name = "%s-%d".formatted(designator, bank);
 				}
 				// Create the ROM memory block.
 				MemoryBlock blk = memory.createInitializedBlock(name, addr,
@@ -208,7 +208,13 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
 					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
-				maybeAddProcessorVectors(program, blk);
+				AddressSpace space = blk.getAddressRange().getAddressSpace();
+				for (var bankingFunction : ROMUtils.getBankingFunctionsForROMPage(header,
+					bank)) {
+					markAsFunction(program, bankingFunction.name,
+						space.getAddress(bankingFunction.location));
+				}
+				maybeAddProcessorVectors(program, space, blk);
 			}
 		}
 		catch (Exception e) {
@@ -274,17 +280,17 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 	}
 
-	private void maybeAddProcessorVectors(Program program, MemoryBlock blk)
+	private void maybeAddProcessorVectors(Program program, AddressSpace space, MemoryBlock blk)
 			throws Exception {
-		addProcessorVector(program, blk, 0xFFFE, "RST");
-		addProcessorVector(program, blk, 0xFFFC, "NMI");
-		addProcessorVector(program, blk, 0xFFFA, "SWI");
-		addProcessorVector(program, blk, 0xFFF8, "IRQ");
+		addProcessorVector(program, space, blk, 0xFFFE, "RST");
+		addProcessorVector(program, space, blk, 0xFFFC, "NMI");
+		addProcessorVector(program, space, blk, 0xFFFA, "SWI");
+		addProcessorVector(program, space, blk, 0xFFF8, "IRQ");
 	}
 
-	private void addProcessorVector(Program program, MemoryBlock blk, long loc, String name)
+	private void addProcessorVector(Program program, AddressSpace space, MemoryBlock blk, long loc,
+			String name)
 			throws Exception {
-		AddressSpace space = blk.getAddressRange().getAddressSpace();
 		Address addr = space.getAddress(loc);
 		if (blk.contains(addr)) {
 			createData(program, addr, DataTypes.PTR, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);

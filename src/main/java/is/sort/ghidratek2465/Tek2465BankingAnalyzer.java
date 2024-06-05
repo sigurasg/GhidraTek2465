@@ -16,6 +16,7 @@ package is.sort.ghidratek2465;
 import java.io.IOException;
 
 import ghidra.app.cmd.disassemble.DisassembleCommand;
+import ghidra.app.cmd.function.CreateFunctionCmd;
 import ghidra.app.plugin.core.analysis.AutoAnalysisManager;
 import ghidra.app.services.AbstractAnalyzer;
 import ghidra.app.services.AnalyzerType;
@@ -185,14 +186,22 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 
 		for (var ref : referenceManager.getReferencesTo(f.getEntryPoint())) {
 			if (ref.getReferenceType().isCall()) {
+				int thunkLength = 8; // Two JSR and a JMP in 2465As.
 				Address callAddress = ref.getFromAddress();
 				if (scopeKind != ScopeKind.TEK2465A) {
 					// The banking thunks in the early and late Bs start with a DES
 					// instruction.
 					callAddress = callAddress.subtract(1);
+					thunkLength += 1;
 				}
 
-				markOrGetFunction(callAddress, functionManager, log);
+				// Try the easy way first.
+				Function thunk = markOrGetFunction(callAddress, functionManager, log);
+				if (thunk == null) {
+					// The easy way didn't work, fire a command to try harder.
+					CreateFunctionCmd cmd = new CreateFunctionCmd(callAddress);
+					cmd.applyTo(program, monitor);
+				}
 			}
 		}
 	}

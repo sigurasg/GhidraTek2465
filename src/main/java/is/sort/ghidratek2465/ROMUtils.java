@@ -167,4 +167,40 @@ public class ROMUtils {
 
 		return result.stream().mapToInt(Integer::intValue).toArray();
 	}
+
+	public static class BankingFunction {
+		public BankingFunction(int l, String n) {
+			location = l;
+			name = n;
+		}
+
+		public final int location;
+		public final String name;
+	}
+
+	/*
+	 * Returns the set of paging functions for a given ROM version & bank.
+	 */
+	static public BankingFunction[] getBankingFunctionsForROMPage(ROMHeader header, int bank) {
+		// TODO(siggi): All the other part number/version/bank combos.
+		if (header.partNumber == 0x5876 && header.version == 1) {
+			assert (bank == 0);
+			return new BankingFunction[] {
+				FN(0xA00F, 2360, 0),
+				FN(0xA029, 2360, 1),
+				FN(0xa043, 2360, 2),
+				FN(0xa05d, 2360, 3),
+				FN(0xa077, 2360, 4),
+				FN(0xa091, 2360, 5),
+				FN(0xa0ab, 2360, 6),
+				FN(0xa0c5, 2360, 7)
+			};
+		}
+
+		return new BankingFunction[0];
+	}
+
+	static private BankingFunction FN(int address, int designator, int bank) {
+		return new BankingFunction(address, "BANK_U%d-%d".formatted(designator, bank));
+	}
 }
