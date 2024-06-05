@@ -184,13 +184,13 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 		var referenceManager = program.getReferenceManager();
 		var functionManager = program.getFunctionManager();
 
+		AddressSet functionsToCreate = new AddressSet();
 		for (var ref : referenceManager.getReferencesTo(f.getEntryPoint())) {
 			if (ref.getReferenceType().isCall()) {
 				int thunkLength = 8; // Two JSR and a JMP in 2465As.
 				Address callAddress = ref.getFromAddress();
 				if (scopeKind != ScopeKind.TEK2465A) {
-					// The banking thunks in the early and late Bs start with a DES
-					// instruction.
+					// The banking thunks in the early and late Bs start with a DES instruction.
 					callAddress = callAddress.subtract(1);
 					thunkLength += 1;
 				}
@@ -198,12 +198,18 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 				// Try the easy way first.
 				Function thunk = markOrGetFunction(callAddress, functionManager, log);
 				if (thunk == null) {
-					// The easy way didn't work, fire a command to try harder.
-					CreateFunctionCmd cmd = new CreateFunctionCmd(callAddress);
-					cmd.applyTo(program, monitor);
+					// The easy way didn't work, schedule a command to try harder.
+					functionsToCreate.add(callAddress);
 				}
 			}
 		}
+
+		if (!functionsToCreate.isEmpty()) {
+			// Schedule a command to try harder for the functions that didn't work out above.
+			CreateFunctionCmd cmd = new CreateFunctionCmd(functionsToCreate);
+			cmd.applyTo(program, monitor);
+		}
+
 	}
 
 	/*
@@ -255,6 +261,10 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 		if (service != null) {
 			// Success, set the service function.
 			f.setThunkedFunction(service);
+		}
+		else {
+			log.appendMsg(
+				"Unable to get service function for JSR at %s.".formatted(destAddr.toString()));
 		}
 
 		return false;
@@ -320,8 +330,11 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 					new AddressSet(entryPoint, entryPoint),
 					SourceType.ANALYSIS);
 			}
-			catch (InvalidInputException | OverlappingFunctionException e) {
+			catch (InvalidInputException e) {
 				log.appendException(e);
+			}
+			catch (OverlappingFunctionException e) {
+				// The caller will deal with the null return.
 			}
 		}
 
