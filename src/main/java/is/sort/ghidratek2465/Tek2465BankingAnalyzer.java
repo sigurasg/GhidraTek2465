@@ -85,8 +85,7 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 
 	@Override
 	public boolean getDefaultEnablement(Program program) {
-		// TODO(siggi): Enable by default once this is proven useful.
-		return false;
+		return true;
 	}
 
 	@Override
@@ -214,6 +213,9 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 
 	/*
 	 * Returns true if this needs to re-run.
+	 *
+	 * TODO(siggi): This could return the destAddress for disassembly, which would
+	 *     allow issuing a single disassembly command per pass.
 	 */
 	private boolean maybeConvertBankingFunctionToThunk(Function f, TaskMonitor monitor,
 			MessageLog log) {
@@ -222,19 +224,25 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		// See whether the first instruction is "JSR".
 		Program program = f.getProgram();
 		Listing listing = program.getListing();
 		FunctionManager functionManager = program.getFunctionManager();
 
+		// Try to retrieve the destination address of the potential banking thunk.
+		// This will return null if f is not a thunk.
 		Address destAddr = getBankingFunctionDestAddr(f, log);
 		if (destAddr == null) {
 			return false;
 		}
 
+		// This function is a paging thunk, let's tag it as such.
+		f.addTag("PAGINGTHUNK");
+
+		// Try to get the call instruction in the destination bank.
 		Instruction serviceCall = listing.getInstructionAt(destAddr);
 		if (serviceCall == null) {
-			// Initiate dissassembly at destAddr.
+			// If analysis has not yet marked this as code, there won't be an
+			// instruction there, so initiate dissassembly at destAddr.
 			DisassembleCommand cmd = new DisassembleCommand(destAddr, null, true);
 			cmd.applyTo(program, monitor);
 			// Just return here as the disassembly is asynchronous, but
@@ -263,8 +271,19 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 			f.setThunkedFunction(service);
 		}
 		else {
-			log.appendMsg(
-				"Unable to get service function for JSR at %s.".formatted(destAddr.toString()));
+			// If there's an instruction here, try to create a function with a command.
+			Instruction instr = listing.getInstructionAt(serviceAddress);
+			if (instr != null) {
+				CreateFunctionCmd cmd = new CreateFunctionCmd(serviceAddress);
+				cmd.applyTo(program, monitor);
+
+				// Revisit this thunk.
+				return true;
+			}
+			else {
+				log.appendMsg(
+					"Unable to get service function for JSR at %s.".formatted(destAddr.toString()));
+			}
 		}
 
 		return false;
