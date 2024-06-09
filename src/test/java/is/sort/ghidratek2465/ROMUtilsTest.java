@@ -117,13 +117,13 @@ public class ROMUtilsTest {
 
 	@Test
 	public void getKnownFunctionsForROMTest() throws IOException {
-		assertEquals(3, ROMUtils.getKnownFunctionsFor(0x3302, 4).length);
-		assertEquals(3, ROMUtils.getKnownFunctionsFor(0x3303, 4).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 4).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 4).length);
 
-		assertEquals(3, ROMUtils.getKnownFunctionsFor(0x3302, 6).length);
-		assertEquals(3, ROMUtils.getKnownFunctionsFor(0x3303, 6).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 6).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 6).length);
 
-		assertEquals(8, ROMUtils.getKnownFunctionsFor(0x5876, 1).length);
+		assertEquals(8, ROMUtils.getKnownFunctions(0x5876, 1).length);
 	}
 
 	static private byte[] getByteArray(int byte_len) {
