@@ -52,6 +52,7 @@ repositories {
 }
 
 dependencies {
+	implementation('com.opencsv:opencsv:4.6')
 	testImplementation("junit:junit:4.12")
 }
 

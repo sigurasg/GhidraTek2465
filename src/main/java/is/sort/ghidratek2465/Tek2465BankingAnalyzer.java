@@ -125,9 +125,19 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 			throws CancelledException {
 		var functions = program.getFunctionManager().getFunctionsOverlapping(set);
 
+		// Count the functions to allow reporting progress.
+		long count = 0;
+		while (functions.hasNext()) {
+			count++;
+			functions.next();
+		}
+		monitor.setMaximum(count);
+
+		functions = program.getFunctionManager().getFunctionsOverlapping(set);
 		// Keep track of any functions that need to be revisited later.
 		AddressSet toRevisit = new AddressSet();
 		functions.forEachRemaining(f -> {
+			monitor.incrementProgress();
 			if (processFunction(f, monitor, log)) {
 				toRevisit.add(f.getBody());
 			}

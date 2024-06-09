@@ -14,8 +14,11 @@
 package is.sort.ghidratek2465;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.opencsv.CSVReader;
 
 import ghidra.app.util.bin.ByteProvider;
 
@@ -168,39 +171,50 @@ public class ROMUtils {
 		return result.stream().mapToInt(Integer::intValue).toArray();
 	}
 
-	public static class BankingFunction {
-		public BankingFunction(int l, String n) {
-			location = l;
-			name = n;
+	public static class FunctionInfo {
+		public FunctionInfo(int bank, int location, String name) {
+			this.bank = bank;
+			this.location = location;
+			this.name = name;
 		}
 
+		public final int bank;
 		public final int location;
 		public final String name;
 	}
 
 	/*
-	 * Returns the set of paging functions for a given ROM version & bank.
+	 * Returns the set of known functions for a given ROM version.
 	 */
-	static public BankingFunction[] getBankingFunctionsForROMPage(ROMHeader header, int bank) {
-		// TODO(siggi): All the other part number/version/bank combos.
-		if (header.partNumber == 0x5876 && header.version == 1) {
-			assert (bank == 0);
-			return new BankingFunction[] {
-				FN(0xA00F, 2360, 0),
-				FN(0xA029, 2360, 1),
-				FN(0xa043, 2360, 2),
-				FN(0xa05d, 2360, 3),
-				FN(0xa077, 2360, 4),
-				FN(0xa091, 2360, 5),
-				FN(0xa0ab, 2360, 6),
-				FN(0xa0c5, 2360, 7)
-			};
-		}
-
-		return new BankingFunction[0];
+	static public FunctionInfo[] getKnownFunctions(int partNumber, int version)
+			throws IOException {
+		return readKnownFunctions(
+			"/knownFunctions/160-%04x-%02d.csv".formatted(partNumber, version));
 	}
 
-	static private BankingFunction FN(int address, int designator, int bank) {
-		return new BankingFunction(address, "BANK_U%d-%d".formatted(designator, bank));
+	static private FunctionInfo[] readKnownFunctions(String resourceName) throws IOException {
+		ArrayList<FunctionInfo> functions = new ArrayList<FunctionInfo>();
+		var stream = ROMUtils.class.getResourceAsStream(resourceName);
+		if (stream != null) {
+			var reader = new InputStreamReader(stream);
+			CSVReader csvReader = new CSVReader(reader);
+			try {
+				String[] line;
+				// Skip the header line.
+				line = csvReader.readNext();
+				while ((line = csvReader.readNext()) != null) {
+					int bank = Integer.decode(line[0]);
+					int location = Integer.decode(line[1]);
+					String name = line[2];
+
+					functions.add(new FunctionInfo(bank, location, name));
+				}
+			}
+			finally {
+				csvReader.close();
+			}
+		}
+		FunctionInfo[] ret = new FunctionInfo[functions.size()];
+		return functions.toArray(ret);
 	}
 }

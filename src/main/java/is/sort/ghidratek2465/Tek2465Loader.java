@@ -184,6 +184,9 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			ROMHeader header = new ROMHeader(provider, headers[0]);
 			String designator = ROMUtils.designatorFromPartNumber(header.partNumber);
 
+			ROMUtils.FunctionInfo[] knownFunctions =
+				ROMUtils.getKnownFunctions(header.partNumber, header.version);
+
 			for (int bank = 0; bank < headers.length; ++bank) {
 				int offset = headers[bank];
 				header = new ROMHeader(provider, offset);
@@ -209,10 +212,11 @@ public class Tek2465Loader extends AbstractProgramLoader {
 					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
 
 				AddressSpace space = blk.getAddressRange().getAddressSpace();
-				for (var bankingFunction : ROMUtils.getBankingFunctionsForROMPage(header,
-					bank)) {
-					markAsFunction(program, bankingFunction.name,
-						space.getAddress(bankingFunction.location));
+				for (var knownFunction : knownFunctions) {
+					if (knownFunction.bank == bank) {
+						markAsFunction(program, knownFunction.name,
+							space.getAddress(knownFunction.location));
+					}
 				}
 				maybeAddProcessorVectors(program, space, blk);
 			}
