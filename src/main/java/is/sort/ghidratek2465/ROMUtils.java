@@ -185,11 +185,12 @@ public class ROMUtils {
 
 	/*
 	 * Returns the set of known functions for a given ROM version.
+	 * Note that @p partNumber and @p version are in BCD format.
 	 */
 	static public FunctionInfo[] getKnownFunctions(int partNumber, int version)
 			throws IOException {
 		return readKnownFunctions(
-			"/knownFunctions/160-%04x-%02d.csv".formatted(partNumber, version));
+			"/knownFunctions/160-%04x-%02x.csv".formatted(partNumber, version));
 	}
 
 	static private FunctionInfo[] readKnownFunctions(String resourceName) throws IOException {

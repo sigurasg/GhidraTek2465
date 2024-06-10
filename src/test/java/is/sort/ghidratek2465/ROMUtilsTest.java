@@ -118,24 +118,27 @@ public class ROMUtilsTest {
 	@Test
 	public void getKnownFunctionsForROMTest() throws IOException {
 		// Known 2465A ROM versions.
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 4).length);
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 4).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 0x04).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 0x04).length);
 
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 6).length);
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 6).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 0x06).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 0x06).length);
 
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 7).length);
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 7).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 0x07).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 0x07).length);
 
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 9).length);
-		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 9).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 0x09).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 0x09).length);
 
 		// Know 2465B early version.
-		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 6).length);
-		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 6).length);
+		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 0x06).length);
+		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 0x06).length);
 
-		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 7).length);
-		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 7).length);
+		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 0x07).length);
+		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 0x07).length);
+
+		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 0x10).length);
+		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 0x10).length);
 
 		// Known 2465B late versions.
 		assertEquals(8, ROMUtils.getKnownFunctions(0x5876, 1).length);
