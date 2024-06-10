@@ -117,12 +117,20 @@ public class ROMUtilsTest {
 
 	@Test
 	public void getKnownFunctionsForROMTest() throws IOException {
+		// Known 2465A ROM versions.
 		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 4).length);
 		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 4).length);
 
 		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 6).length);
 		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 6).length);
 
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 7).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 7).length);
+
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3302, 9).length);
+		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 9).length);
+
+		// Known 2465B late versions.
 		assertEquals(8, ROMUtils.getKnownFunctions(0x5876, 1).length);
 	}
 
