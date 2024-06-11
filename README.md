@@ -13,14 +13,32 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
   - The 2465B/2467B early models with through-hole A5 board.
   - The 2465B/2467B late models with SMD A5 board.
 * Creates typed memory blocks for the IO.
-  - The different scope versions have different IO register layouts.
+
+  This aids analysis as it makes it easy to track down users of different registers
+  using the cross-reference tables Ghidra builds.
+  Also note that different scope versions have different IO register layouts.
+  
 * Creates typed symbols for the ROM headers
 * Tags the code pointed to by the vector table as functions for analysis.
-* Analyzes banking thunks and propagates disassembly across banks.
-* Sets the destination of a banking thunk to the service function,
-  which aids analysis. When the decompiler encounters a thunk, it displays
+
+  This gives the auto analysis a starting points for disassembly and function discovery.
+  
+* Analyzes banking thunks.
+
+  This propagates the disassembly across banks, which allows even more code discovery
+  in auto analysis.
+  
+* Sets the destination of a banking thunk to the service function.
+
+  This aids analysis as when the decompiler encounters a thunk, it displays
   the ultimate destination of a thunk or a series of thunks, rather than
   showing the thunk as the destination.
+
+* Marks known (banking) functions at load time.
+
+  For know ROM part number/version combos, this fully automates the initial
+  auto analysis. Note that it may be necessary to initiate auto analysis
+  a couple of times due to the way the analyzer works.
 
 ## How to install
 1. Download a [prebuilt GhidraTek2465 release](https://github.com/sigurasg/GhidraTek2465/releases), or build it yourself.
