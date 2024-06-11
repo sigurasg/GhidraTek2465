@@ -36,6 +36,7 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryBlock;
+import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.SourceType;
 import ghidra.util.exception.CancelledException;
 import ghidra.util.exception.InvalidInputException;
@@ -268,33 +269,38 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 			return false;
 		}
 
-		var refs = serviceCall.getOperandReferences(0);
-		if (refs.length != 1) {
+		// Sometimes the decompiler generates two references for a JSR instruction.
+		// This seems to happen when the stack pointer has a known value at the point of call.
+		Reference[] refs = serviceCall.getOperandReferences(0);
+		Address serviceAddress = null;
+		// Get the service function.
+		for (var ref : refs) {
+			if (ref.getReferenceType().isCall()) {
+				serviceAddress = ref.getToAddress();
+			}
+		}
+		if (serviceAddress == null) {
 			return false;
 		}
 
-		// Get the service function.
-		Address serviceAddress = refs[0].getToAddress();
 		Function service = markOrGetFunction(serviceAddress, functionManager, log);
 		if (service != null) {
 			// Success, set the service function.
 			f.setThunkedFunction(service);
+			return false;
 		}
-		else {
-			// If there's an instruction here, try to create a function with a command.
-			Instruction instr = listing.getInstructionAt(serviceAddress);
-			if (instr != null) {
-				CreateFunctionCmd cmd = new CreateFunctionCmd(serviceAddress);
-				cmd.applyTo(program, monitor);
 
-				// Revisit this thunk.
-				return true;
-			}
-			else {
-				log.appendMsg(
-					"Unable to get service function for JSR at %s.".formatted(destAddr.toString()));
-			}
+		// If there's an instruction here, try to create a function with a command.
+		Instruction instr = listing.getInstructionAt(serviceAddress);
+		if (instr != null) {
+			CreateFunctionCmd cmd = new CreateFunctionCmd(serviceAddress);
+			cmd.applyTo(program, monitor);
+
+			// Revisit this thunk.
+			return true;
 		}
+		log.appendMsg(
+			"Unable to get service function for JSR at %s.".formatted(destAddr.toString()));
 
 		return false;
 	}
@@ -322,11 +328,15 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 			return null;
 		}
 		// Lookup the callee function.
-		var refs = bankingCall.getOperandReferences(0);
-		if (refs.length != 1) {
-			return null;
+		// Sometimes the decompiler generates two references per call instruction,
+		// specifically it seems when the stack pointer value is known.
+		Reference[] refs = bankingCall.getOperandReferences(0);
+		Function callee = null;
+		for (Reference ref : refs) {
+			if (ref.getReferenceType().isCall()) {
+				callee = program.getFunctionManager().getFunctionAt(ref.getToAddress());
+			}
 		}
-		Function callee = program.getFunctionManager().getFunctionAt(refs[0].getToAddress());
 		if (callee == null) {
 			return null;
 		}
