@@ -61,6 +61,7 @@ buildExtension {
 	exclude 'gradle.properties'
 	exclude '.github/**'
 	exclude 'gradle/**'
+	exclude 'eclipse/**'
 }
 
 // And don't ship the tests.
