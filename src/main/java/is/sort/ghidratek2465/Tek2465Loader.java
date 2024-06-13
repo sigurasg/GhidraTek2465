@@ -287,7 +287,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 		// Make sure the stitched ROM image is valid.
 		if (!ROMUtils.hasValidHeaderAt(provider, 0)) {
-			// We don't have the right part numbers. Bail.
+			// We don't have a valid ROM image. Bail.
 			log.appendMsg("Can't create a stitch block, malformed ROM image.");
 			return null;
 		}
@@ -305,7 +305,10 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		Memory memory = program.getMemory();
 		final long chunkSize = 0x2000;
 
-		// The overlay address space name is derived from the block that engenders it.
+		// The overlay address space name is derived from the block that engenders it,
+		// and the joined-up block will take the name of the first one in sequence.
+		// Since the ROM header identifies this as part number 5371, we name it like
+		// an additional bank on U2260.
 		MemoryBlock one =
 			memory.createInitializedBlock("U2260-2", as.getAddress(0xA000), first, 0x8000,
 				chunkSize, true);
@@ -320,9 +323,6 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				0x8000, chunkSize, false);
 		MemoryBlock stitched = memory.join(one, two);
 		stitched = memory.join(stitched, three);
-
-		// This is the name of the whole stitched block.
-		//stitched.setName("U2260-2");
 
 		initializeNewBlock(program, knownFunctions, 2, stitched);
 
