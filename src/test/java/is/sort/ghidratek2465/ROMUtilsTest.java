@@ -131,8 +131,8 @@ public class ROMUtilsTest {
 		assertEquals(3, ROMUtils.getKnownFunctions(0x3303, 0x09).length);
 
 		// Know 2465B early version.
-		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 0x06).length);
-		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 0x06).length);
+		assertEquals(8, ROMUtils.getKnownFunctions(0x5370, 0x06).length);
+		assertEquals(12, ROMUtils.getKnownFunctions(0x5371, 0x06).length);
 
 		assertEquals(6, ROMUtils.getKnownFunctions(0x5370, 0x07).length);
 		assertEquals(6, ROMUtils.getKnownFunctions(0x5371, 0x07).length);
