@@ -16,7 +16,6 @@ package is.sort.ghidratek2465;
 import static ghidra.program.model.data.DataUtilities.createData;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -32,6 +31,7 @@ import ghidra.app.util.opinion.LoaderTier;
 import ghidra.framework.model.DomainObject;
 import ghidra.framework.model.Project;
 import ghidra.framework.store.LockException;
+import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSpace;
@@ -178,6 +178,12 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 		var as = program.getAddressFactory().getDefaultAddressSpace();
 		Memory memory = program.getMemory();
+
+		// Back the memory blocks with FileBytes as there are cases where the full
+		// contents of the binary are needed.
+		FileBytes fileBytes = memory.createFileBytes(provider.getName(), 0, provider.length(),
+			provider.getInputStream(0), monitor);
+
 		try {
 			var headers = ROMUtils.findValidRomHeaders(provider);
 			// Derive the designator from the first (and possibly only) header.
@@ -195,7 +201,6 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				int loadAddr = header.getLoadAddress();
 				Address addr = as.getAddress(loadAddr);
 
-				InputStream data = provider.getInputStream(offset);
 				String name;
 				if (headers.length == 1) {
 					name = designator;
@@ -204,8 +209,8 @@ public class Tek2465Loader extends AbstractProgramLoader {
 					name = "%s-%d".formatted(designator, bank);
 				}
 				// Create the ROM memory block.
-				MemoryBlock blk = memory.createInitializedBlock(name, addr,
-					data, header.getByteSize(), monitor, ROMUtils.isOverlay(header));
+				MemoryBlock blk = memory.createInitializedBlock(name, addr, fileBytes, offset,
+					header.getByteSize(), ROMUtils.isOverlay(header));
 				blk.setPermissions(true, false, true);
 
 				createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
