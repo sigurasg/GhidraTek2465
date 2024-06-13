@@ -22,6 +22,7 @@ import java.util.List;
 
 import ghidra.app.util.Option;
 import ghidra.app.util.OptionUtils;
+import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramLoader;
@@ -33,12 +34,14 @@ import ghidra.framework.model.Project;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
+import ghidra.program.model.address.AddressOutOfBoundsException;
 import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
+import ghidra.program.model.mem.MemoryAccessException;
 import ghidra.program.model.mem.MemoryBlock;
 import ghidra.program.model.mem.MemoryConflictException;
 import ghidra.program.model.symbol.SourceType;
@@ -185,16 +188,16 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			provider.getInputStream(0), monitor);
 
 		try {
-			var headers = ROMUtils.findValidRomHeaders(provider);
+			int[] headerOffsets = ROMUtils.findValidRomHeaders(provider);
 			// Derive the designator from the first (and possibly only) header.
-			ROMHeader header = new ROMHeader(provider, headers[0]);
+			ROMHeader header = new ROMHeader(provider, headerOffsets[0]);
 			String designator = ROMUtils.designatorFromPartNumber(header.partNumber);
 
 			ROMUtils.FunctionInfo[] knownFunctions =
 				ROMUtils.getKnownFunctions(header.partNumber, header.version);
 
-			for (int bank = 0; bank < headers.length; ++bank) {
-				int offset = headers[bank];
+			for (int bank = 0; bank < headerOffsets.length; ++bank) {
+				int offset = headerOffsets[bank];
 				header = new ROMHeader(provider, offset);
 
 				// Find the load address for this page.
@@ -202,7 +205,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				Address addr = as.getAddress(loadAddr);
 
 				String name;
-				if (headers.length == 1) {
+				if (headerOffsets.length == 1) {
 					name = designator;
 				}
 				else {
@@ -211,19 +214,17 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				// Create the ROM memory block.
 				MemoryBlock blk = memory.createInitializedBlock(name, addr, fileBytes, offset,
 					header.getByteSize(), ROMUtils.isOverlay(header));
-				blk.setPermissions(true, false, true);
+				initializeNewBlock(program, knownFunctions, bank, blk);
+			}
 
-				createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
-					ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
-
-				AddressSpace space = blk.getAddressRange().getAddressSpace();
-				for (var knownFunction : knownFunctions) {
-					if (knownFunction.bank == bank) {
-						markAsFunction(program, knownFunction.name,
-							space.getAddress(knownFunction.location));
-					}
+			if (ROMUtils.scopeKindFromPartNumber(header.partNumber) == ScopeKind.TEK2465B) {
+				// There is a special case with these scopes where one bank is stitched
+				// together from otherwise occluded segments of two ROMs.
+				List<FileBytes> allFileBytes = memory.getAllFileBytes();
+				if (allFileBytes.size() == 2) {
+					maybeCreateStitchedMemoryBlock(program, knownFunctions, allFileBytes, log,
+						monitor);
 				}
-				maybeAddProcessorVectors(program, space, blk);
 			}
 		}
 		catch (Exception e) {
@@ -232,11 +233,125 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		}
 	}
 
+	private void initializeNewBlock(Program program, ROMUtils.FunctionInfo[] knownFunctions,
+			int bank,
+			MemoryBlock blk) throws CodeUnitInsertionException, InvalidInputException,
+			AddressOutOfBoundsException, MemoryAccessException {
+		blk.setPermissions(true, false, true);
+
+		createData(program, blk.getStart(), DataTypes.ROM_HEADER, -1,
+			ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
+
+		AddressSpace space = blk.getAddressRange().getAddressSpace();
+		for (var knownFunction : knownFunctions) {
+			if (knownFunction.bank == bank) {
+				markAsFunction(program, knownFunction.name,
+					space.getAddress(knownFunction.location));
+			}
+		}
+		maybeAddProcessorVectors(program, space, blk);
+	}
+
+	private MemoryBlock maybeCreateStitchedMemoryBlock(Program program,
+			ROMUtils.FunctionInfo[] knownFunctions,
+			List<FileBytes> allFileBytes, MessageLog log, TaskMonitor monitor)
+			throws CodeUnitInsertionException, Exception {
+		// Start by verifying that we have one each a 160-5370-X and 160-5371-X.
+		FileBytes first = allFileBytes.get(0);
+		FileBytes second = allFileBytes.get(1);
+
+		// See whether the part numbers are possibly switched around.
+		ROMHeader header1 = getHeaderForFileBytes(first);
+		if (header1.partNumber == 0x5371) {
+			// Switch the file bytes around.
+			first = allFileBytes.get(1);
+			second = allFileBytes.get(0);
+		}
+
+		// Redo header snoop in case of switching above.
+		header1 = getHeaderForFileBytes(first);
+		ROMHeader header2 = getHeaderForFileBytes(second);
+		if (header1.partNumber != 0x5370 || header2.partNumber != 0x5371) {
+			// We don't have the right part numbers. Bail.
+			log.appendMsg("Can't create a stitch block with part numbers %04X and %04X"
+					.formatted(header1.partNumber, header2.partNumber));
+			return null;
+		}
+
+		// Construct the ROM image in memory to pre-flight the operation.
+		byte[] bytes = new byte[0x6000];
+		first.getOriginalBytes(0x8000, bytes, 0, 0x2000);
+		second.getOriginalBytes(0x0000, bytes, 0x2000, 0x2000);
+		second.getOriginalBytes(0x8000, bytes, 0x4000, 0x2000);
+		ByteArrayProvider provider = new ByteArrayProvider(bytes);
+
+		// Make sure the stitched ROM image is valid.
+		if (!ROMUtils.hasValidHeaderAt(provider, 0)) {
+			// We don't have the right part numbers. Bail.
+			log.appendMsg("Can't create a stitch block, malformed ROM image.");
+			return null;
+		}
+
+		// Validate that the part number and load address are what we expect.
+		ROMHeader header = new ROMHeader(provider, 0);
+		if (header.partNumber != 0x5371 || header.getLoadAddress() != 0xA000) {
+			log.appendMsg("Can't create a stitch block, unexpected part number or load address.");
+			return null;
+		}
+
+		// OK we have a valid stitched ROM image. Now create the stitched up memory block by
+		// joining three smaller blocks.
+		AddressSpace as = program.getAddressFactory().getDefaultAddressSpace();
+		Memory memory = program.getMemory();
+		final long chunkSize = 0x2000;
+
+		// The overlay address space name is derived from the block that engenders it.
+		MemoryBlock one =
+			memory.createInitializedBlock("U2260-2", as.getAddress(0xA000), first, 0x8000,
+				chunkSize, true);
+
+		// Create the blocks back to back from the same overlay address space by stringing
+		// their addresses back to back.
+		MemoryBlock two =
+			memory.createInitializedBlock("U2260@0000", one.getStart().add(chunkSize), second, 0x0,
+				chunkSize, false);
+		MemoryBlock three =
+			memory.createInitializedBlock("U2260@8000", two.getStart().add(chunkSize), second,
+				0x8000, chunkSize, false);
+		MemoryBlock stitched = memory.join(one, two);
+		stitched = memory.join(stitched, three);
+
+		// This is the name of the whole stitched block.
+		//stitched.setName("U2260-2");
+
+		initializeNewBlock(program, knownFunctions, 2, stitched);
+
+		return stitched;
+	}
+
+	private ROMHeader getHeaderForFileBytes(FileBytes fileBytes) throws IOException {
+		final int expectedSize = 0x10000;
+		// Make sure the files are the correct size.
+		if (fileBytes.getSize() != expectedSize) {
+			return null;
+		}
+		byte[] bytes = new byte[expectedSize];
+		fileBytes.getOriginalBytes(0, bytes);
+		ByteArrayProvider provider = new ByteArrayProvider(bytes);
+		int[] headerOffsets = ROMUtils.findValidRomHeaders(provider);
+		if (headerOffsets.length < 1) {
+			return null;
+		}
+		ROMHeader header = new ROMHeader(provider, headerOffsets[0]);
+		int partNumber = header.partNumber;
+		return header;
+	}
+
 	private void addScopeMemoryBlocks(ScopeKind scopeKind, DataTypes dataTypes, Program program)
 			throws LockException, MemoryConflictException, AddressOverflowException,
 			CodeUnitInsertionException, InvalidInputException {
-		var as = program.getAddressFactory().getDefaultAddressSpace();
 		Memory memory = program.getMemory();
+		AddressSpace as = program.getAddressFactory().getDefaultAddressSpace();
 
 		// Create and optionally type the IO space.
 		MemoryBlock blk =
@@ -290,7 +405,8 @@ public class Tek2465Loader extends AbstractProgramLoader {
 	}
 
 	private void maybeAddProcessorVectors(Program program, AddressSpace space, MemoryBlock blk)
-			throws Exception {
+			throws CodeUnitInsertionException, InvalidInputException, AddressOutOfBoundsException,
+			MemoryAccessException {
 		addProcessorVector(program, space, blk, 0xFFFE, "RST");
 		addProcessorVector(program, space, blk, 0xFFFC, "NMI");
 		addProcessorVector(program, space, blk, 0xFFFA, "SWI");
@@ -298,8 +414,8 @@ public class Tek2465Loader extends AbstractProgramLoader {
 	}
 
 	private void addProcessorVector(Program program, AddressSpace space, MemoryBlock blk, long loc,
-			String name)
-			throws Exception {
+			String name) throws CodeUnitInsertionException, InvalidInputException,
+			AddressOutOfBoundsException, MemoryAccessException {
 		Address addr = space.getAddress(loc);
 		if (blk.contains(addr)) {
 			createData(program, addr, DataTypes.PTR, -1, ClearDataMode.CLEAR_ALL_CONFLICT_DATA);
