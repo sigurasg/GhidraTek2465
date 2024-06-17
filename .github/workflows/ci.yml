@@ -1,16 +1,19 @@
 name: ci
-on: push
-
-env:
-  GHIDRA_VERSION: "11.0.3"
-  GHIDRA_BUILD_DATE: 20240410
-  GHIDRA_SHA256: 2462a2d0ab11e30f9e907cd3b4aa6b48dd2642f325617e3d922c28e752be6761
-  GHIDRA_INSTALL_DIR: /home/runner/ghidra
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build_and_test:
     name: Build + test
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        ghidra:
+          - "11.1.1"
+          - "11.1"
+          - "11.0.3"
+          - "11.0.2"
+          - "11.0.1"
+          - "11.0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -18,12 +21,16 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
           cache: 'gradle'
-      - name: Install Ghidra
-        run: .github/scripts/install_ghidra.sh
-      - run: ./gradlew build buildExt
+      - name: Install Ghidra ${{ matrix.ghidra }}
+        uses: antoniovazquezblanco/setup-ghidra@v2.0.3
+        with:
+          auth_token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ matrix.ghidra }}
+      - name: Build
+        run: ./gradlew buildExtension -PGHIDRA_INSTALL_DIR=${{ env.GHIDRA_INSTALL_DIR }}
       - uses: actions/upload-artifact@v4
         with:
-          name: distribution
+          name: GhidraTek2465_Ghidra_${{ matrix.ghidra }}
           path: dist/*_GhidraTek2465.zip
           if-no-files-found: 'error'
   release:
