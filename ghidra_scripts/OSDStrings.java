@@ -132,7 +132,7 @@ public class OSDStrings {
 				entry(0x6E6D, "/R"),
 				entry(0x70, "V"),
 				entry(0x7271, "/S"),
-				entry(0x74, "x"),
+				entry(0x74, "X"),
 				entry(0x7675, "/T"),
 				entry(0x78, "m/n/l"),
 				entry(0x7B7A, "/V"),
