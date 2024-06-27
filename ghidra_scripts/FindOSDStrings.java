@@ -129,6 +129,5 @@ public class FindOSDStrings extends GhidraScript {
 	}
 
 	private final long osdStringPointerOffset = 0x7A;
-	private final byte EOS = (byte)0xFF;
 	private DataType stringType;
 }
