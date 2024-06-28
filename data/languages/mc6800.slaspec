@@ -68,9 +68,9 @@ REL:  addr    is simm8  [ addr = inst_next + simm8;  ]   { export *:2 addr; }
 # 1-byte operand, immediate/direct/indexed/extended addressing mode
 OP1: "#"imm8    is addrMode=0; imm8
 {
-	# For some reason this needs explicit sizing, or the p-code
-	# ends up picking up a zero value for all #imm8 operands.
-	local tmp:1 = imm8;
+    # For some reason this needs explicit sizing, or the p-code
+    # ends up picking up a zero value for all #imm8 operands.
+    local tmp:1 = imm8;
     export tmp;
 }
 OP1: imm8    is addrMode=1; imm8
@@ -373,8 +373,8 @@ macro PushEntireState()
 
 :NOP    is op=0x01
 {
-	# Intentional NOP.
-	goto inst_next;
+    # Intentional NOP.
+    goto inst_next;
 }
 
 :TAP    is op=0x06
@@ -446,7 +446,7 @@ macro PushEntireState()
     negate(OP1);
 }
 
-:COM^acc_4 	is (op=0x43 | op=0x53) & acc_4
+:COM^acc_4  is (op=0x43 | op=0x53) & acc_4
 {
     complement(acc_4);
 }
@@ -456,7 +456,7 @@ macro PushEntireState()
     complement(OP1);
 }
 
-:LSR^acc_4 	is (op=0x44 | op=0x54) & acc_4
+:LSR^acc_4  is (op=0x44 | op=0x54) & acc_4
 {
     logicalShiftRight(acc_4);
 }
@@ -466,7 +466,7 @@ macro PushEntireState()
     logicalShiftRight(OP1);
 }
 
-:ROR^acc_4 	is (op=0x46 | op=0x56) & acc_4
+:ROR^acc_4  is (op=0x46 | op=0x56) & acc_4
 {
     rotateRightWithCarry(acc_4);
 }
@@ -476,7 +476,7 @@ macro PushEntireState()
     rotateRightWithCarry(OP1);
 }
 
-:ASR^acc_4 	is (op=0x47 | op=0x57) & acc_4
+:ASR^acc_4  is (op=0x47 | op=0x57) & acc_4
 {
     arithmeticShiftRight(acc_4);
 }
@@ -486,7 +486,7 @@ macro PushEntireState()
     arithmeticShiftRight(OP1);
 }
 
-:ASL^acc_4 	is (op=0x48 | op=0x58) & acc_4
+:ASL^acc_4  is (op=0x48 | op=0x58) & acc_4
 {
     logicalShiftLeft(acc_4);
 }
@@ -636,7 +636,7 @@ macro PushEntireState()
 
 #:BHS REL    is op=0x24; REL # See BCC
 
-:BCC REL	is op=0x24; REL
+:BCC REL    is op=0x24; REL
 {
     if ($(C) == 0) goto REL;
 }
