@@ -894,7 +894,7 @@ macro PushEntireState()
 
 :ADDB OP1    is (op=0xCB | op=0xDB | op=0xEB | op=0xFB) ... & OP1
 {
-    setHFlag(A, OP1);
+    setHFlag(B, OP1);
     addition(B, OP1);
 }
 
