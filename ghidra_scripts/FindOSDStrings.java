@@ -83,13 +83,15 @@ public class FindOSDStrings extends GhidraScript {
 
 			byte[] osdBytes = OSDStrings.readOSDStringBytes(ldx.getMemory(), stringStart);
 			if (osdBytes == null) {
-				println("Unable to read OSD string at %s.".formatted(stringStart));
+				currentProgram.getBookmarkManager().
+					setBookmark(stringStart, "Error", "OSD_STRING", "Unable to read OSD string.");
 				continue;
 			}
 
 			String osdString = OSDStrings.decodeOSDString(osdBytes);
 			if (osdString == null) {
-				println("Unable to decode OSD string at %s.".formatted(stringStart));
+				currentProgram.getBookmarkManager().
+					setBookmark(stringStart, "Error", "OSD_STRING", "Unable to decode OSD string.");
 				continue;
 			}
 
@@ -104,7 +106,8 @@ public class FindOSDStrings extends GhidraScript {
 			// Find or create a data block for the string.
 			Data data = findOrCreateOSDStringData(stringStart, osdBytes.length + 1);
 			if (data == null) {
-				println("Unable to find or create data at %s.".formatted(stringStart));
+				currentProgram.getBookmarkManager().
+					setBookmark(stringStart, "Error", "OSD_STRING", "Unable to find or create data.");
 				continue;
 			}
 

@@ -1,24 +1,24 @@
 /* ###
  * IP: GHIDRA
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 // Builds a Ghidra Extension for a given Ghidra installation.
 //
-// An absolute path to the Ghidra installation directory must be supplied either by setting the 
+// An absolute path to the Ghidra installation directory must be supplied either by setting the
 // GHIDRA_INSTALL_DIR environment variable or Gradle project property:
 //
-//     > export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra> 
+//     > export GHIDRA_INSTALL_DIR=<Absolute path to Ghidra>
 //     > gradle
 //
 //         or
@@ -29,42 +29,71 @@
 // application.gradle.version property in <GHIDRA_INSTALL_DIR>/Ghidra/application.properties
 // for the correction version of Gradle to use for the Ghidra installation you specify.
 
-//----------------------START "DO NOT MODIFY" SECTION------------------------------
+//----------------------START 'DO NOT MODIFY' SECTION------------------------------
 def ghidraInstallDir
 
 if (System.env.GHIDRA_INSTALL_DIR) {
-	ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
+    ghidraInstallDir = System.env.GHIDRA_INSTALL_DIR
 }
-else if (project.hasProperty("GHIDRA_INSTALL_DIR")) {
-	ghidraInstallDir = project.getProperty("GHIDRA_INSTALL_DIR")
+else if (project.hasProperty('GHIDRA_INSTALL_DIR')) {
+    ghidraInstallDir = project.getProperty('GHIDRA_INSTALL_DIR')
 }
 
 if (ghidraInstallDir) {
-	apply from: new File(ghidraInstallDir).getCanonicalPath() + "/support/buildExtension.gradle"
+    apply from: new File(ghidraInstallDir).getCanonicalPath() + '/support/buildExtension.gradle'
 }
 else {
-	throw new GradleException("GHIDRA_INSTALL_DIR is not defined!")
+    throw new GradleException('GHIDRA_INSTALL_DIR is not defined!')
 }
-//----------------------END "DO NOT MODIFY" SECTION-------------------------------
+//----------------------END 'DO NOT MODIFY' SECTION-------------------------------
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 dependencies {
-	implementation('com.opencsv:opencsv:4.6')
-	testImplementation("junit:junit:4.12")
+    implementation('com.opencsv:opencsv:4.6')
+    testImplementation('junit:junit:4.12')
+}
+
+tasks.register('compileSleigh', JavaExec) {
+    description = 'Run sleigh on the MC6800 languages spec.'
+
+    File slaspecFile = file("data/languages/mc6800.slaspec")
+    File slaFile = file("data/languages/mc6800.sla")
+
+    inputs.files(fileTree("data/languages").include("*.slaspec", "*.sinc"))
+        .withPropertyName("sourceFiles")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
+    outputs.files(slaFile)
+        .withPropertyName("outputFile")
+
+    mainClass.set("ghidra.pcodeCPort.slgh_compile.SleighCompile")
+    classpath =
+        fileTree("$ghidraInstallDir/Ghidra/Framework") { include("**/*.jar") } +
+        fileTree("$ghidraInstallDir/Ghidra/Features") { include("**/*.jar") }
+
+    args = ["-u", "-l", "-n", "-t", "-e", "-c", "-f", "-o", "-s", slaspecFile.absolutePath]
+}
+
+tasks.named('buildExtension') {
+    dependsOn('compileSleigh')
+}
+
+tasks.named('test') {
+    dependsOn('compileSleigh')
 }
 
 // Exclude additional files from the built extension
 buildExtension {
-	exclude 'gradle.properties'
-	exclude '.github/**'
-	exclude 'gradle/**'
-	exclude 'eclipse/**'
+    exclude '.vscode/**'
+    exclude 'gradle.properties'
+    exclude '.github/**'
+    exclude 'gradle/**'
+    exclude 'eclipse/**'
 }
 
 // And don't ship the tests.
 zipSource {
-	exclude 'src/test/**'
+    exclude 'src/test/**'
 }
