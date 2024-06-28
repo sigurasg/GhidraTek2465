@@ -275,7 +275,7 @@ macro subtractionWithCarry(reg, op)
 macro compare(reg, op)
 {
     $(V) = sborrow(reg, op);
-    $(C) = (tmp < op);
+    $(C) = (reg < op);
     local tmp = reg - op;
     setNZFlags(tmp);
 }
