@@ -254,9 +254,9 @@ macro additionWithCarry(reg, op)
 macro subtraction(reg, op)
 {
     $(V) = sborrow(reg, op);
+    $(C) = (reg < op);
     reg = reg - op;
     setNZFlags(reg);
-    $(C) = (reg < op);
 }
 
 macro subtractionWithCarry(reg, op)
@@ -275,9 +275,9 @@ macro subtractionWithCarry(reg, op)
 macro compare(reg, op)
 {
     $(V) = sborrow(reg, op);
+    $(C) = (tmp < op);
     local tmp = reg - op;
     setNZFlags(tmp);
-    $(C) = (tmp < op);
 }
 
 macro logicalAnd(reg, op)
