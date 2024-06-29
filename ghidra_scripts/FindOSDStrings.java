@@ -114,6 +114,8 @@ public class FindOSDStrings extends GhidraScript {
 			// Add the string as a comment on the data block.
 			data.setComment(data.EOL_COMMENT, osdString);
 		}
+
+		println("Found %d candidate OSD strings.".formatted(foundStrings.size()));
 	}
 
 	private Data findOrCreateOSDStringData(Address stringStart, int length) {
