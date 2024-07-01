@@ -119,6 +119,127 @@ public class DisassemblyTest extends AbstractGenericTest {
 		test(0x67, "ASR 0x12,X", 0x12);
 	}
 
+	@Test
+	public void BCC() {
+		test(0x24, "BCC 0x0022", 0x20);
+	}
+
+	@Test
+	public void BCS() {
+		test(0x25, "BCS 0x0022", 0x20);
+	}
+
+	@Test
+	public void BEQ() {
+		test(0x27, "BEQ 0x0022", 0x20);
+	}
+
+	@Test
+	public void BGE() {
+		test(0x2C, "BGE 0x0022", 0x20);
+	}
+
+	@Test
+	public void BGT() {
+		test(0x2E, "BGT 0x0022", 0x20);
+	}
+
+	@Test
+	public void BHI() {
+		test(0x22, "BHI 0x0022", 0x20);
+	}
+
+	@Test
+	public void BIT() {
+		test(0x85, "BITA #0xab", 0xAB);
+		test(0x95, "BITA 0x00ab", 0xAB);
+		test(0xB5, "BITA 0x1234", 0x12, 0x34);
+		test(0xA5, "BITA 0xab,X", 0xAB);
+
+		test(0xC5, "BITB #0xab", 0xAB);
+		test(0xD5, "BITB 0x00ab", 0xAB);
+		test(0xF5, "BITB 0x1234", 0x12, 0x34);
+		test(0xE5, "BITB 0xab,X", 0xAB);
+	}
+
+	@Test
+	public void BLE() {
+		test(0x2F, "BLE 0x0022", 0x20);
+	}
+
+	@Test
+	public void BLS() {
+		test(0x23, "BLS 0x0022", 0x20);
+	}
+
+	@Test
+	public void BLT() {
+		test(0x2D, "BLT 0x0022", 0x20);
+	}
+
+	@Test
+	public void BMI() {
+		test(0x2B, "BMI 0x0022", 0x20);
+	}
+
+	@Test
+	public void BNE() {
+		test(0x26, "BNE 0x0022", 0x20);
+	}
+
+	@Test
+	public void BPL() {
+		test(0x2A, "BPL 0x0022", 0x20);
+	}
+
+	@Test
+	public void BRA() {
+		test(0x20, "BRA 0x0022", 0x20);
+	}
+
+	@Test
+	public void BSR() {
+		test(0x8D, "BSR 0x0022", 0x20);
+	}
+
+	@Test
+	public void BVC() {
+		test(0x28, "BVC 0x0022", 0x20);
+	}
+
+	@Test
+	public void BVS() {
+		test(0x29, "BVS 0x0022", 0x20);
+	}
+
+	@Test
+	public void CBA() {
+		test(0x11, "CBA");
+	}
+
+	@Test
+	public void CLC() {
+		test(0x0C, "CLC");
+	}
+
+	@Test
+	public void CLI() {
+		test(0x0E, "CLI");
+	}
+
+	@Test
+	public void CLR() {
+		test(0x4F, "CLRA");
+		test(0x5F, "CLRB");
+		test(0x7F, "CLR 0x1234", 0x12, 0x34);
+		test(0x6F, "CLR 0x12,X", 0x12);
+	}
+
+	@Test
+	public void CLV() {
+		test(0x0A, "CLV");
+	}
+
 	// TODO(siggi): Test the rest of the instruction set.
 
 	@Test
