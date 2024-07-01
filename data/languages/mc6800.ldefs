@@ -22,6 +22,7 @@
             variant="default"
             version="1.0"
             slafile="mc6800.sla"
+            manualindexfile="../manuals/mc6800.idx"
             processorspec="mc6800.pspec"
             id="MC6800:BE:16:default">
     <description>MC6800 Microprocessor</description>
