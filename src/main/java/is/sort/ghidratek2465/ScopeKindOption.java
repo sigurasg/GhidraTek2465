@@ -53,7 +53,7 @@ class ScopeKindOption extends Option {
 		var panel = new JPanel();
 		panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
 
-		var comboBox = new JComboBox();
+		var comboBox = new JComboBox<String>();
 		for (var kind : ScopeKind.values()) {
 			comboBox.addItem(ROMUtils.getScopeKindName(kind));
 		}

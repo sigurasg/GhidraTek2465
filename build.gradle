@@ -95,6 +95,11 @@ tasks.named('test') {
     dependsOn('compileSleigh')
 }
 
+tasks.withType(JavaCompile) {
+    options.deprecation = true
+    options.compilerArgs += ['-Xlint:unchecked']
+}
+
 // Exclude additional files from the built extension
 buildExtension {
     exclude 'data/**'

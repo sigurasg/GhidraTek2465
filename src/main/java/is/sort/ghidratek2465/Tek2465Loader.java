@@ -39,6 +39,7 @@ import ghidra.program.model.address.AddressOverflowException;
 import ghidra.program.model.address.AddressSpace;
 import ghidra.program.model.data.DataUtilities.ClearDataMode;
 import ghidra.program.model.lang.LanguageCompilerSpecPair;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.Program;
 import ghidra.program.model.mem.Memory;
 import ghidra.program.model.mem.MemoryAccessException;
@@ -51,7 +52,11 @@ import ghidra.util.exception.InvalidInputException;
 import ghidra.util.task.TaskMonitor;
 
 /**
- * TODO: Provide class-level documentation that describes what this loader does.
+ * This loader creates the address map for ROM images that satisfy the header signatures
+ * and CRC checksums for the ROMs seen in the Tek2465 scopes.
+ * For ROM versions it knows about, it also tags the banking functions, which in turn allows
+ * the analyzer to propagate disassembly across ROM banks, and to create thunk functions
+ * for the banking thunks.
  */
 public class Tek2465Loader extends AbstractProgramLoader {
 	private static final String OPTION_ADD_MEMORY_BLOCKS = "Add Memory Blocks";
@@ -64,7 +69,11 @@ public class Tek2465Loader extends AbstractProgramLoader {
 	}
 
 	@Override
-	public boolean supportsLoadIntoProgram() {
+	public boolean supportsLoadIntoProgram(Program program) {
+		// Only support MC6800-language programs.
+		if (!program.getLanguageID().equals(new LanguageID("MC6800:BE:16:default"))) {
+			return false;
+		}
 		return true;
 	}
 

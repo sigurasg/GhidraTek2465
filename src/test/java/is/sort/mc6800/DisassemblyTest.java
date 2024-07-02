@@ -22,6 +22,8 @@ import java.io.ByteArrayOutputStream;
 
 import org.junit.Test;
 
+import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
+import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.CodeUnit;
 
 public class DisassemblyTest extends IntegrationTest {
