@@ -19,15 +19,15 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 
 import org.junit.Test;
 
-import ghidra.app.plugin.processors.sleigh.SleighLanguageProvider;
-import ghidra.program.model.lang.LanguageID;
 import ghidra.program.model.listing.CodeUnit;
 
 public class DisassemblyTest extends IntegrationTest {
-	public DisassemblyTest() {
+	public DisassemblyTest() throws IOException {
+		super();
 	}
 
 	@Test

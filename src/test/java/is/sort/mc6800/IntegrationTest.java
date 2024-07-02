@@ -40,6 +40,7 @@ import utility.application.ApplicationLayout;
 public abstract class IntegrationTest extends AbstractGenericTest {
 
 	protected final Language language;
+	protected final ProgramDB program;
 
 	@Override
 	protected ApplicationLayout createApplicationLayout() throws IOException {
@@ -51,20 +52,13 @@ public abstract class IntegrationTest extends AbstractGenericTest {
 	}
 
 	protected CodeUnit disassemble(byte[] bytes) {
-		ProgramDB program;
-		try {
-			program = new ProgramDB("test", language, language.getDefaultCompilerSpec(), this);
-		}
-		catch (IOException e) {
-			return null;
-		}
-
 		try (Transaction transaction = program.openTransaction("disassemble")) {
 			ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
+			// Create an overlay block.
 			MemoryBlock block = program.getMemory()
 					.createInitializedBlock("test", address(0), stream, bytes.length,
 						TaskMonitor.DUMMY,
-						false);
+						true);
 
 			Disassembler disassembler =
 				Disassembler.getDisassembler(program, TaskMonitor.DUMMY, null);
@@ -79,9 +73,10 @@ public abstract class IntegrationTest extends AbstractGenericTest {
 		}
 	}
 
-	public IntegrationTest() {
+	public IntegrationTest() throws IOException {
 		SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 		this.language = provider.getLanguage(new LanguageID("MC6800:BE:16:default"));
+		this.program = new ProgramDB("test", language, language.getDefaultCompilerSpec(), this);
 	}
 
 	// This is necessary to inject the build directory into the application layout.
