@@ -47,7 +47,7 @@ public abstract class IntegrationTest extends AbstractGenericTest {
 		return new TestApplicationLayout(new File(AbstractGTest.getTestDirectoryPath()));
 	}
 
-	private Address address(int addr) {
+	protected Address address(int addr) {
 		return language.getDefaultSpace().getAddress(addr);
 	}
 
