@@ -14,15 +14,16 @@
 
 package is.sort.ghidratek2465;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import ghidra.app.util.bin.ByteArrayProvider;
 
@@ -62,9 +63,10 @@ public class ROMUtilsTest {
 		assertEquals(0xBCFF, ROMUtils.checksumRange(getBytes(0x400), 0x0000, 0x0300));
 	}
 
-	@Test(expected = IOException.class)
+	@Test
 	public void checksumOutOfBounds() throws IOException {
-		ROMUtils.checksumRange(getBytes(0x400), 0x0000, 0x0401);
+		assertThrows(IOException.class,
+			() -> ROMUtils.checksumRange(getBytes(0x400), 0x0000, 0x0401));
 	}
 
 	@Test

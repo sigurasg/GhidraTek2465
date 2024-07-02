@@ -14,11 +14,11 @@
 
 package is.sort.mc6800;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import db.Transaction;
 import ghidra.app.emulator.EmulatorHelper;

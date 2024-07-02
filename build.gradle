@@ -53,7 +53,10 @@ repositories {
 
 dependencies {
     implementation('com.opencsv:opencsv:4.6')
-    testImplementation('junit:junit:4.12')
+
+    testImplementation(platform('org.junit:junit-bom:5.10.3'))
+    testImplementation('org.junit.jupiter:junit-jupiter')
+    testRuntimeOnly('org.junit.platform:junit-platform-launcher')
 }
 
 task copySleighSources(type: Copy) {
@@ -92,7 +95,13 @@ tasks.named('buildExtension') {
 }
 
 tasks.named('test') {
+    useJUnitPlatform()
+
     dependsOn('compileSleigh')
+
+    testLogging {
+        events "passed", "skipped", "failed"
+    }
 }
 
 tasks.withType(JavaCompile) {
