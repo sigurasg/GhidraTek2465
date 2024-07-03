@@ -16,8 +16,6 @@ package is.sort.mc6800;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.io.IOException;
-
 import org.junit.jupiter.api.Test;
 
 import db.Transaction;
@@ -28,7 +26,7 @@ import ghidra.util.exception.CancelledException;
 import ghidra.util.task.TaskMonitor;
 
 public class EmulatorTest extends IntegrationTest {
-	public EmulatorTest() throws IOException {
+	public EmulatorTest() {
 		try (Transaction transaction = program.openTransaction("test")) {
 			program.getMemory().createUninitializedBlock("ram", address(0x0000), 0x10000, false);
 			transaction.commit();

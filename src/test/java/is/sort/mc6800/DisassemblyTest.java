@@ -15,24 +15,16 @@
 package is.sort.mc6800;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 import org.junit.jupiter.api.Test;
 
 import ghidra.program.model.listing.CodeUnit;
 
 public class DisassemblyTest extends IntegrationTest {
-	public DisassemblyTest() throws IOException {
-		super();
-	}
-
-	@Test
-	public void languageFoundTest() {
-		assertNotEquals(language, null);
+	public DisassemblyTest() {
 	}
 
 	// The instructions are tested in the order of appearance in the

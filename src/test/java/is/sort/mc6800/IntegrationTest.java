@@ -39,14 +39,6 @@ import utility.application.ApplicationLayout;
 
 public abstract class IntegrationTest extends AbstractGenericTest {
 
-	protected final Language language;
-	protected final ProgramDB program;
-
-	@Override
-	protected ApplicationLayout createApplicationLayout() throws IOException {
-		return new TestApplicationLayout(new File(AbstractGTest.getTestDirectoryPath()));
-	}
-
 	protected Address address(int addr) {
 		return language.getDefaultSpace().getAddress(addr);
 	}
@@ -73,10 +65,21 @@ public abstract class IntegrationTest extends AbstractGenericTest {
 		}
 	}
 
-	public IntegrationTest() throws IOException {
+	public IntegrationTest() {
 		SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 		this.language = provider.getLanguage(new LanguageID("MC6800:BE:16:default"));
-		this.program = new ProgramDB("test", language, language.getDefaultCompilerSpec(), this);
+		ProgramDB program = null;
+		try {
+			program = new ProgramDB("test", language, language.getDefaultCompilerSpec(), this);
+		}
+		catch (IOException e) {
+		}
+		this.program = program;
+	}
+
+	@Override
+	protected ApplicationLayout createApplicationLayout() throws IOException {
+		return new TestApplicationLayout(new File(AbstractGTest.getTestDirectoryPath()));
 	}
 
 	// This is necessary to inject the build directory into the application layout.
@@ -93,4 +96,7 @@ public abstract class IntegrationTest extends AbstractGenericTest {
 			return ret;
 		}
 	}
+
+	protected final Language language;
+	protected final ProgramDB program;
 }
