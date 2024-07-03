@@ -37,7 +37,7 @@ import ghidra.program.model.mem.MemoryBlock;
 import ghidra.util.task.TaskMonitor;
 import utility.application.ApplicationLayout;
 
-public abstract class IntegrationTest extends AbstractGenericTest {
+public abstract class AbstractIntegrationTest extends AbstractGenericTest {
 
 	protected Address address(int addr) {
 		return language.getDefaultSpace().getAddress(addr);
@@ -65,7 +65,7 @@ public abstract class IntegrationTest extends AbstractGenericTest {
 		}
 	}
 
-	public IntegrationTest() {
+	public AbstractIntegrationTest() {
 		SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
 		this.language = provider.getLanguage(new LanguageID("MC6800:BE:16:default"));
 		ProgramDB program = null;

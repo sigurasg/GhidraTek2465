@@ -23,7 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import ghidra.program.model.listing.CodeUnit;
 
-public class DisassemblyTest extends IntegrationTest {
+public class DisassemblyTest extends AbstractIntegrationTest {
 	public DisassemblyTest() {
 	}
 

@@ -900,7 +900,10 @@ macro PushEntireState()
 
 :CPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
 {
-    compare(X, OP2);
+    # Can't use the compare macro here because there is no carry.    
+    $(V) = sborrow(X, OP2);
+    local tmp = X - OP2;
+    setNZFlags(tmp);
 }
 
 :BSR REL    is op=0x8D; REL
