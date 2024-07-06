@@ -529,7 +529,7 @@ public class DisassemblyTest extends AbstractIntegrationTest {
 	}
 
 	@Test
-	public void InvalidInstructions() {
+	public void InvalidOpCodes() {
 		assertInvalidOpcode(0x00);
 		assertInvalidOpcode(0x02);
 		assertInvalidOpcode(0x03);
