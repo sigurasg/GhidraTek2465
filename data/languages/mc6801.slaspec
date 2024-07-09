@@ -18,9 +18,17 @@
 
 :ABX    is op=0x3A
 {
-# TODO(siggi): Writeme.
-#    addition(X, B);
+    # No effect on flags.
+    X = X + zext(B);
 }
+
+# ADDD
+# ASLD
+# BRN
+# JSR (direct)
+# LDD
+# LSRD
+# MUL
 
 :PSHX   is op=0x3C
 {
@@ -31,3 +39,10 @@
 {
     Pull2(S, X);
 }
+
+:STD OP2    is (op=0xDD | op=0xFD | op=0xED) ... & OP2
+{
+    storeRegister(D, OP2);
+}
+
+# SUBD

@@ -35,4 +35,11 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 	public void PULX() {
 		test(0x38, "PULX");
 	}
+
+	@Test
+	public void STD() {
+		test(0xDD, "STD 0x00ab", 0xAB);
+		test(0xFD, "STD 0x1234", 0x12, 0x34);
+		test(0xED, "STD X,0xab", 0xAB);
+	}
 }

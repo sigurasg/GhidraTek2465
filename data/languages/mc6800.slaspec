@@ -26,6 +26,10 @@ define space register type=register_space size=1;
 # 8-bit registers A, B
 define register offset=0 size=1 [ A B ];
 
+@ifdef MC6801
+define register offset=0 size=2 [ D ];
+@endif
+
 # 8-bit condition code register
 define register offset=8 size=1 [ CC ];
 # 16-bit registers:
@@ -900,10 +904,14 @@ macro PushEntireState()
 
 :CPX OP2    is (op=0x8C | op=0x9C | op=0xAC | op=0xBC) ... & OP2
 {
+@ifdef MC6801
+    compare(X, OP2);
+@else
     # Can't use the compare macro here because there is no carry.    
     $(V) = sborrow(X, OP2);
     local tmp = X - OP2;
     setNZFlags(tmp);
+@endif
 }
 
 :BSR REL    is op=0x8D; REL
