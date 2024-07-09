@@ -112,10 +112,12 @@ OP2: imm16      is addrMode=3; imm16
 }
 
 # 2-byte EA operand for JMP/JSR
+@ifdef MC6801
 EA2: imm8      is addrMode=1; imm8
 {
     export *:2 imm8;
 }
+@endif
 EA2: imm8,X      is addrMode=2 & X; imm8
 {
     local tmp:2 = X + imm8;

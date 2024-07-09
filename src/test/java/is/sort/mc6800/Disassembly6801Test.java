@@ -91,4 +91,52 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 		test(0xB3, "SUBD 0x1234", 0x12, 0x34);
 		test(0xA3, "SUBD 0xab,X", 0xAB);
 	}
+
+	@Test
+	public void InvalidOpCodes() {
+		assertInvalidOpcode(0x00);
+		assertInvalidOpcode(0x02);
+		assertInvalidOpcode(0x03);
+
+		assertInvalidOpcode(0x12);
+		assertInvalidOpcode(0x13);
+		assertInvalidOpcode(0x14);
+		assertInvalidOpcode(0x15);
+		assertInvalidOpcode(0x18);
+
+		assertInvalidOpcode(0x1A);
+		assertInvalidOpcode(0x1C);
+		assertInvalidOpcode(0x1D);
+		assertInvalidOpcode(0x14);
+		assertInvalidOpcode(0x1F);
+
+		assertInvalidOpcode(0x41);
+		assertInvalidOpcode(0x42);
+		assertInvalidOpcode(0x45);
+		assertInvalidOpcode(0x4B);
+		assertInvalidOpcode(0x4E);
+
+		assertInvalidOpcode(0x51);
+		assertInvalidOpcode(0x52);
+		assertInvalidOpcode(0x55);
+		assertInvalidOpcode(0x5B);
+		assertInvalidOpcode(0x5E);
+
+		assertInvalidOpcode(0x61);
+		assertInvalidOpcode(0x62);
+		assertInvalidOpcode(0x65);
+		assertInvalidOpcode(0x6B);
+
+		assertInvalidOpcode(0x71);
+		assertInvalidOpcode(0x72);
+		assertInvalidOpcode(0x75);
+		assertInvalidOpcode(0x7B);
+
+		assertInvalidOpcode(0x87);
+		assertInvalidOpcode(0x8F);
+
+		assertInvalidOpcode(0xC7);
+		assertInvalidOpcode(0xCD);
+		assertInvalidOpcode(0xCF);
+	}
 }
