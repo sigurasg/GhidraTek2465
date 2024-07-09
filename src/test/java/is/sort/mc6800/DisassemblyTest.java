@@ -28,6 +28,11 @@ import ghidra.program.model.listing.Instruction;
 
 public class DisassemblyTest extends AbstractIntegrationTest {
 	public DisassemblyTest() {
+		super("MC6800:BE:16:default");
+	}
+
+	public DisassemblyTest(String lang) {
+		super(lang);
 	}
 
 	// The instructions are tested in the order of appearance in the
@@ -528,92 +533,13 @@ public class DisassemblyTest extends AbstractIntegrationTest {
 		test(0x3E, "WAI");
 	}
 
-	@Test
-	public void InvalidOpCodes() {
-		assertInvalidOpcode(0x00);
-		assertInvalidOpcode(0x02);
-		assertInvalidOpcode(0x03);
-		assertInvalidOpcode(0x04);
-		assertInvalidOpcode(0x05);
-
-		assertInvalidOpcode(0x12);
-		assertInvalidOpcode(0x13);
-		assertInvalidOpcode(0x14);
-		assertInvalidOpcode(0x15);
-		assertInvalidOpcode(0x18);
-
-		assertInvalidOpcode(0x1A);
-		assertInvalidOpcode(0x1C);
-		assertInvalidOpcode(0x1D);
-		assertInvalidOpcode(0x14);
-		assertInvalidOpcode(0x1F);
-
-		assertInvalidOpcode(0x21);
-
-		assertInvalidOpcode(0x38);
-		assertInvalidOpcode(0x3A);
-		assertInvalidOpcode(0x3C);
-		assertInvalidOpcode(0x3D);
-
-		assertInvalidOpcode(0x41);
-		assertInvalidOpcode(0x42);
-		assertInvalidOpcode(0x45);
-		assertInvalidOpcode(0x4B);
-		assertInvalidOpcode(0x4E);
-
-		assertInvalidOpcode(0x51);
-		assertInvalidOpcode(0x52);
-		assertInvalidOpcode(0x55);
-		assertInvalidOpcode(0x5B);
-		assertInvalidOpcode(0x5E);
-
-		assertInvalidOpcode(0x61);
-		assertInvalidOpcode(0x62);
-		assertInvalidOpcode(0x65);
-		assertInvalidOpcode(0x6B);
-
-		assertInvalidOpcode(0x71);
-		assertInvalidOpcode(0x72);
-		assertInvalidOpcode(0x75);
-		assertInvalidOpcode(0x7B);
-
-		assertInvalidOpcode(0x83);
-		assertInvalidOpcode(0x87);
-		assertInvalidOpcode(0x8F);
-
-		assertInvalidOpcode(0x93);
-		assertInvalidOpcode(0x9D);
-
-		assertInvalidOpcode(0xA3);
-
-		assertInvalidOpcode(0xB3);
-
-		assertInvalidOpcode(0xC3);
-		assertInvalidOpcode(0xC7);
-		assertInvalidOpcode(0xCC);
-		assertInvalidOpcode(0xCD);
-		assertInvalidOpcode(0xCF);
-
-		assertInvalidOpcode(0xD3);
-		assertInvalidOpcode(0xDC);
-		assertInvalidOpcode(0xDD);
-
-		assertInvalidOpcode(0xE3);
-		assertInvalidOpcode(0xEC);
-		assertInvalidOpcode(0xED);
-
-		assertInvalidOpcode(0xF3);
-		assertInvalidOpcode(0xFC);
-		assertInvalidOpcode(0xFD);
-	}
-
-	private void assertInvalidOpcode(int opCode) {
+	protected void assertInvalidOpcode(int opCode) {
 		byte[] code = new byte[] { (byte) opCode, (byte) 0x12, (byte) 0x34 };
 		CodeUnit codeUnit = disassemble(code);
 		assertTrue(codeUnit instanceof Data);
 	}
 
-	private void test(int opCode, String expected, int... args) {
+	protected void test(int opCode, String expected, int... args) {
 		ByteArrayOutputStream stream = new ByteArrayOutputStream();
 
 		stream.write(opCode);

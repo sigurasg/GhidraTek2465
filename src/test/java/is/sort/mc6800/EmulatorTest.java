@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test;
 
 public class EmulatorTest extends AbstractEmulatorTest {
 	public EmulatorTest() {
-		super();
+		super("MC6800:BE:16:default");
 	}
 
 	@Test
