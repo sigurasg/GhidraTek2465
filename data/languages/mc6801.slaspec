@@ -16,7 +16,7 @@
 
 @include "mc6800.slaspec"
 
-:ABX    is op=0x3A
+:ABX        is op=0x3A
 {
     # No effect on flags.
     X = X + zext(B);
@@ -27,12 +27,46 @@
     addition(D, OP2);
 }
 
-# ASLD
-# BRN
-# JSR (direct)
-# LDD
-# LSRD
-# MUL
+:ASLD       is op=0x05
+{
+    $(C) = D[15, 1];
+    D = D << 1;
+    $(Z) = (D == 0);
+    $(N) = D[15, 1];
+}
+
+:BRN        is op=0x21
+{
+    # Branch never is an elaborate NOP.
+    goto inst_next;
+}
+
+:JSR EA2    is op=0x9d ... & EA2
+{
+    local addr:2 = inst_next;
+    Push2(S, addr);
+    local target:2 = EA2;
+    call [target];
+}
+
+:LDD OP2    is (op=0xCC | op=0xDC | op=0xFC | op=0xEC) ... & OP2
+{
+    loadRegister(D, OP2);
+}
+
+:LSRD       is op=0x04
+{
+    $(C) = D[0, 1];
+    D = D << 1;
+    $(Z) = (D == 0);
+    $(N) = D[15, 1];
+}
+
+:MUL        is op=0x3D
+{
+    D = zext(A) * zext(B);
+    $(C) = D[15,1];
+}
 
 :PSHX       is op=0x3C
 {
@@ -49,4 +83,7 @@
     storeRegister(D, OP2);
 }
 
-# SUBD
+:SUBD OP2   is (op=0x83 | op=0x93 | op=0xB3 | op=0xA3) ... & OP2
+{
+    subtraction(D, OP2);
+}
