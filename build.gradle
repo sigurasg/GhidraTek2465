@@ -79,7 +79,7 @@ task compileSleigh(type: JavaExec) {
         fileTree("$ghidraInstallDir/Ghidra/Framework") { include('**/*.jar') } +
         fileTree("$ghidraInstallDir/Ghidra/Features") { include('**/*.jar') }
 
-    args = ['-u', '-l', '-n', '-t', '-e', '-c', '-f', '-o', '-s', '-a', 'build/data/languages']
+    args = ['-u', '-l', '-n', '-t', '-e', '-c', '-f', '-o', '-s', '-a', 'data/languages']
 }
 
 task copySleighSources(type: Sync) {
@@ -116,6 +116,8 @@ buildExtension {
     exclude '.github/**'
     exclude 'gradle/**'
     exclude 'eclipse/**'
+
+    dependsOn(copySleighSources)
 }
 
 // And don't ship the tests.
