@@ -22,7 +22,10 @@
     X = X + zext(B);
 }
 
-# ADDD
+:ADDD OP2   is (op=0xC3 | op=0xD3 | op=0xF3 | op=0xE3) ... & OP2
+{
+    addition(D, OP2);
+}
 # ASLD
 # BRN
 # JSR (direct)
@@ -30,12 +33,12 @@
 # LSRD
 # MUL
 
-:PSHX   is op=0x3C
+:PSHX       is op=0x3C
 {
     Push2(S, X);
 }
 
-:PULX   is op=0x38
+:PULX       is op=0x38
 {
     Pull2(S, X);
 }

@@ -27,6 +27,14 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 	}
 
 	@Test
+	public void ADDD() {
+		test(0xC3, "ADDD #0x1234", 0x12, 0x34);
+		test(0xD3, "ADDD 0x00ab", 0xab);
+		test(0xF3, "ADDD 0x1234", 0x12, 0x34);
+		test(0xE3, "ADDD 0xab,X", 0xAB);
+	}
+
+	@Test
 	public void PSHX() {
 		test(0x3C, "PSHX");
 	}
@@ -40,6 +48,6 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 	public void STD() {
 		test(0xDD, "STD 0x00ab", 0xAB);
 		test(0xFD, "STD 0x1234", 0x12, 0x34);
-		test(0xED, "STD X,0xab", 0xAB);
+		test(0xED, "STD 0xab,X", 0xAB);
 	}
 }

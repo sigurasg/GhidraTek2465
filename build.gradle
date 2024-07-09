@@ -100,7 +100,7 @@ tasks.named('buildExtension') {
 tasks.named('test') {
     useJUnitPlatform()
 
-    dependsOn('compileSleigh')
+    dependsOn(copySleighSources)
 }
 
 tasks.withType(JavaCompile) {
