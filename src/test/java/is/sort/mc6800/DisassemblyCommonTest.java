@@ -26,12 +26,8 @@ import ghidra.program.model.listing.CodeUnit;
 import ghidra.program.model.listing.Data;
 import ghidra.program.model.listing.Instruction;
 
-public class DisassemblyTest extends AbstractIntegrationTest {
-	public DisassemblyTest() {
-		super("MC6800:BE:16:default");
-	}
-
-	public DisassemblyTest(String lang) {
+public abstract class DisassemblyCommonTest extends AbstractIntegrationTest {
+	protected DisassemblyCommonTest(String lang) {
 		super(lang);
 	}
 
