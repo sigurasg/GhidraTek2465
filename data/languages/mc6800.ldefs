@@ -37,12 +37,11 @@
             variant="default"
             version="1.0"
             slafile="mc6801.sla"
-            processorspec="mc6800.pspec"
+            manualindexfile="../manuals/mc6801.idx"
+            processorspec="mc6801.pspec"
             id="MC6801:BE:16:default">
     <description>MC6801 Microprocessor</description>
     <compiler name="default" spec="mc6800.cspec" id="default"/>
-    <external_name tool="IDA-PRO" name="MC6800"/>
-    <external_name tool="IDA-PRO" name="MC6802"/>
-    <external_name tool="IDA-PRO" name="MC6808"/>
+    <external_name tool="IDA-PRO" name="MC6801"/>
   </language>
 </language_definitions>
