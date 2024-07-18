@@ -65,9 +65,9 @@ public abstract class AbstractIntegrationTest extends AbstractGenericTest {
 		}
 	}
 
-	public AbstractIntegrationTest() {
+	public AbstractIntegrationTest(String lang) {
 		SleighLanguageProvider provider = SleighLanguageProvider.getSleighLanguageProvider();
-		this.language = provider.getLanguage(new LanguageID("MC6800:BE:16:default"));
+		this.language = provider.getLanguage(new LanguageID(lang));
 		ProgramDB program = null;
 		try {
 			program = new ProgramDB("test", language, language.getDefaultCompilerSpec(), this);

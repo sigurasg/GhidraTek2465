@@ -30,7 +30,9 @@ import ghidra.util.task.TaskMonitor;
 
 public abstract class AbstractEmulatorTest extends AbstractIntegrationTest {
 
-	public AbstractEmulatorTest() {
+	public AbstractEmulatorTest(String lang) {
+		super(lang);
+
 		try (Transaction transaction = program.openTransaction("test")) {
 			program.getMemory().createUninitializedBlock("ram", address(0x0000), 0x10000, false);
 			transaction.commit();
