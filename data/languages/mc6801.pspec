@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Copyright 2022-2024 Sigurdur Asgeirsson <siggi@sort.is>
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+
+<processor_spec>
+  <programcounter register="PC"/>
+  <default_symbols>
+    <symbol name="P1DDR" address="0x00"/>
+    <symbol name="P2DDR" address="0x01"/>
+    <symbol name="P1DATA" address="0x02"/>
+    <symbol name="P2DATA" address="0x03"/>
+    <symbol name="P3DDR" address="0x04"/>
+    <symbol name="P4DDR" address="0x05"/>
+    <symbol name="P3DATA" address="0x06"/>
+    <symbol name="P4DATA" address="0x07"/>
+    <symbol name="TCSR" address="0x08"/>
+    <symbol name="TIMER" address="0x09"/>
+    <symbol name="OUTCMP" address="0x0B"/>
+    <symbol name="IMPCAP" address="0x0D"/>
+    <symbol name="P3SCR" address="0x0F"/>
+    <symbol name="RMCR" address="0x10"/>
+    <symbol name="TRCS" address="0x11"/>
+    <symbol name="RX" address="0x12"/>
+    <symbol name="TX" address="0x13"/>
+    <symbol name="RAMCR" address="0x14"/>
+
+    <symbol name="SCI_VECTOR" address="0xFFF0" entry="true" type="code_ptr"/>
+    <symbol name="TOF_VECTOR" address="0xFFF2" entry="true" type="code_ptr"/>
+    <symbol name="OCF_VECTOR" address="0xFFF4" entry="true" type="code_ptr"/>
+    <symbol name="ICF_VECTOR" address="0xFFF6" entry="true" type="code_ptr"/>
+    <symbol name="IRQ_VECTOR" address="0xFFF8" entry="true" type="code_ptr"/>
+    <symbol name="SWI_VECTOR" address="0xFFFA" entry="true" type="code_ptr"/>
+    <symbol name="NMI_VECTOR" address="0xFFFC" entry="true" type="code_ptr"/>
+    <symbol name="RST_VECTOR" address="0xFFFE" entry="true" type="code_ptr"/>
+  </default_symbols>
+</processor_spec>
