@@ -17,6 +17,11 @@
 
 <processor_spec>
   <programcounter register="PC"/>
+
+  <default_memory_blocks>
+    <memory_block name="Internal Registers" start_address="RAM:0" length="0x20" initialized="false"/>
+  </default_memory_blocks>
+
   <default_symbols>
     <symbol name="P1DDR" address="0x00"/>
     <symbol name="P2DDR" address="0x01"/>
