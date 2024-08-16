@@ -8,12 +8,10 @@ jobs:
     strategy:
       matrix:
         ghidra:
+          - "11.1.2"
           - "11.1.1"
           - "11.1"
           - "11.0.3"
-          - "11.0.2"
-          - "11.0.1"
-          - "11.0"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
