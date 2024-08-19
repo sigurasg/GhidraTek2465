@@ -6,7 +6,7 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
 
 ## Features
 
-* MC6800 support for Sleigh.
+* MC6800 and MC6801 language specs for Sleigh.
 * ROM loader for the 2465 series.
   - The original 2465.
   - The 2465A/2467.
