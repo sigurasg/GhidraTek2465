@@ -50,7 +50,7 @@
             variant="default"
             version="1.0"
             slafile="hd6803.sla"
-            processorspec="hd6803.pspec"
+            processorspec="mc6801.pspec"
             id="HD6803:BE:16:default">
     <description>MC6801 Microprocessor</description>
     <compiler name="default" spec="mc6800.cspec" id="default"/>

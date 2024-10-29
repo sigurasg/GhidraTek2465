@@ -16,9 +16,43 @@ package is.sort.mc6800;
 
 import org.junit.jupiter.api.Test;
 
-public class Disassembly6801Test extends Disassembly6801CommonTest {
-	public Disassembly6801Test() {
-		super("MC6801:BE:16:default");
+public class DisassemblyHD6803Test extends Disassembly6801CommonTest {
+	public DisassemblyHD6803Test() {
+		super("HD6803:BE:16:default");
+	}
+
+	@Test
+	public void AIM() {
+		test(0x71, "AIM #0x12, 34", 0x12, 0x34);
+		test(0x61, "AIM #0x12, 34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void OIM() {
+		test(0x72, "OIM #0x12, 34", 0x12, 0x34);
+		test(0x62, "OIM #0x12, 34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void EIM() {
+		test(0x75, "EIM #0x12, 34", 0x12, 0x34);
+		test(0x66, "EIM #0x12, 34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void TIM() {
+		test(0x7B, "TIM #0x12, 34", 0x12, 0x34);
+		test(0x6B, "TIM #0x12, 34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void XGDX() {
+		test(0x18, "XGDX");
+	}
+
+	@Test
+	public void SLP() {
+		test(0x1A, "SLP");
 	}
 
 	@Test
@@ -31,9 +65,7 @@ public class Disassembly6801Test extends Disassembly6801CommonTest {
 		assertInvalidOpcode(0x13);
 		assertInvalidOpcode(0x14);
 		assertInvalidOpcode(0x15);
-		assertInvalidOpcode(0x18);
 
-		assertInvalidOpcode(0x1A);
 		assertInvalidOpcode(0x1C);
 		assertInvalidOpcode(0x1D);
 		assertInvalidOpcode(0x14);
