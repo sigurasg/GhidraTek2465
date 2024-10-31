@@ -40,7 +40,6 @@ public abstract class AbstractEmulatorTest extends AbstractIntegrationTest {
 		catch (Exception e) {
 			fail("Failed to create RAM.", e);
 		}
-
 	}
 
 	class FailOnMemoryFault implements MemoryFaultHandler {
@@ -53,7 +52,6 @@ public abstract class AbstractEmulatorTest extends AbstractIntegrationTest {
 		public boolean unknownAddress(Address address, boolean write) {
 			return false;
 		}
-
 	}
 
 	protected void setA(int value) {
@@ -62,6 +60,10 @@ public abstract class AbstractEmulatorTest extends AbstractIntegrationTest {
 
 	protected void setB(int value) {
 		emulator.writeRegister("B", value);
+	}
+
+	protected void setD(int value) {
+		emulator.writeRegister("D", value);
 	}
 
 	protected void setCC(int value) {
@@ -88,6 +90,10 @@ public abstract class AbstractEmulatorTest extends AbstractIntegrationTest {
 		return emulator.readRegister("B").intValue();
 	}
 
+	protected int getD() {
+		return emulator.readRegister("D").intValue();
+	}
+
 	protected int getCC() {
 		return emulator.readRegister("CC").intValue();
 	}
@@ -110,6 +116,14 @@ public abstract class AbstractEmulatorTest extends AbstractIntegrationTest {
 			stream.write(v);
 		}
 		emulator.writeMemory(address(addr), stream.toByteArray());
+	}
+
+	protected byte[] read(int addr, int length) {
+		return emulator.readMemory(address(addr), length);
+	}
+
+	protected byte readByte(int addr) {
+		return read(addr, 1)[0];
 	}
 
 	protected void stepFrom(int addr) {
