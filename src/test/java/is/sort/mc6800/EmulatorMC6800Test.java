@@ -18,8 +18,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-public class EmulatorTest extends AbstractEmulatorTest {
-	public EmulatorTest() {
+public class EmulatorMC6800Test extends AbstractEmulatorTest {
+	public EmulatorMC6800Test() {
 		super("MC6800:BE:16:default");
 	}
 

@@ -16,7 +16,7 @@ package is.sort.mc6800;
 
 import org.junit.jupiter.api.Test;
 
-public class DisassemblyHD6803Test extends Disassembly6801CommonTest {
+public class DisassemblyHD6803Test extends DisassemblyMC6801CommonTest {
 	public DisassemblyHD6803Test() {
 		super("HD6803:BE:16:default");
 	}

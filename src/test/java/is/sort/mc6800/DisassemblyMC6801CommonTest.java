@@ -16,8 +16,8 @@ package is.sort.mc6800;
 
 import org.junit.jupiter.api.Test;
 
-public abstract class Disassembly6801CommonTest extends DisassemblyCommonTest {
-	public Disassembly6801CommonTest(String lang) {
+public abstract class DisassemblyMC6801CommonTest extends DisassemblyCommonTest {
+	public DisassemblyMC6801CommonTest(String lang) {
 		super(lang);
 	}
 

@@ -16,8 +16,8 @@ package is.sort.mc6800;
 
 import org.junit.jupiter.api.Test;
 
-public class Disassembly6800Test extends DisassemblyCommonTest {
-	public Disassembly6800Test() {
+public class DisassemblyMC6800Test extends DisassemblyCommonTest {
+	public DisassemblyMC6800Test() {
 		super("MC6800:BE:16:default");
 	}
 
