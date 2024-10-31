@@ -16,80 +16,9 @@ package is.sort.mc6800;
 
 import org.junit.jupiter.api.Test;
 
-public class Disassembly6801Test extends DisassemblyCommonTest {
-	public Disassembly6801Test() {
-		super("MC6801:BE:16:default");
-	}
-
-	@Test
-	public void ABX() {
-		test(0x3A, "ABX");
-	}
-
-	@Test
-	public void ADDD() {
-		test(0xC3, "ADDD #0x1234", 0x12, 0x34);
-		test(0xD3, "ADDD 0x00ab", 0xab);
-		test(0xF3, "ADDD 0x1234", 0x12, 0x34);
-		test(0xE3, "ADDD 0xab,X", 0xAB);
-	}
-
-	@Test
-	public void ASLD() {
-		test(0x05, "ASLD");
-	}
-
-	@Override
-	@Test
-	public void JSR() {
-		// Test the MC6800 variants.
-		super.JSR();
-
-		// The direct JSR is first present in the MC6801.
-		test(0x9D, "JSR 0x00ab", 0xAB);
-	}
-
-	@Test
-	public void LDD() {
-		test(0xCC, "LDD #0x1234", 0x12, 0x34);
-		test(0xDC, "LDD 0x00ab", 0xab);
-		test(0xFC, "LDD 0x1234", 0x12, 0x34);
-		test(0xEC, "LDD 0xab,X", 0xAB);
-	}
-
-	@Test
-	public void LSRD() {
-		test(0x04, "LSRD");
-	}
-
-	@Test
-	public void MUL() {
-		test(0x3D, "MUL");
-	}
-
-	@Test
-	public void PSHX() {
-		test(0x3C, "PSHX");
-	}
-
-	@Test
-	public void PULX() {
-		test(0x38, "PULX");
-	}
-
-	@Test
-	public void STD() {
-		test(0xDD, "STD 0x00ab", 0xAB);
-		test(0xFD, "STD 0x1234", 0x12, 0x34);
-		test(0xED, "STD 0xab,X", 0xAB);
-	}
-
-	@Test
-	public void SUBD() {
-		test(0x83, "SUBD #0x1234", 0x12, 0x34);
-		test(0x93, "SUBD 0x00ab", 0xab);
-		test(0xB3, "SUBD 0x1234", 0x12, 0x34);
-		test(0xA3, "SUBD 0xab,X", 0xAB);
+public class DisassemblyMC6800Test extends DisassemblyCommonTest {
+	public DisassemblyMC6800Test() {
+		super("MC6800:BE:16:default");
 	}
 
 	@Test
@@ -97,6 +26,8 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 		assertInvalidOpcode(0x00);
 		assertInvalidOpcode(0x02);
 		assertInvalidOpcode(0x03);
+		assertInvalidOpcode(0x04);
+		assertInvalidOpcode(0x05);
 
 		assertInvalidOpcode(0x12);
 		assertInvalidOpcode(0x13);
@@ -109,6 +40,13 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 		assertInvalidOpcode(0x1D);
 		assertInvalidOpcode(0x14);
 		assertInvalidOpcode(0x1F);
+
+		assertInvalidOpcode(0x21);
+
+		assertInvalidOpcode(0x38);
+		assertInvalidOpcode(0x3A);
+		assertInvalidOpcode(0x3C);
+		assertInvalidOpcode(0x3D);
 
 		assertInvalidOpcode(0x41);
 		assertInvalidOpcode(0x42);
@@ -132,11 +70,33 @@ public class Disassembly6801Test extends DisassemblyCommonTest {
 		assertInvalidOpcode(0x75);
 		assertInvalidOpcode(0x7B);
 
+		assertInvalidOpcode(0x83);
 		assertInvalidOpcode(0x87);
 		assertInvalidOpcode(0x8F);
 
+		assertInvalidOpcode(0x93);
+		assertInvalidOpcode(0x9D);
+
+		assertInvalidOpcode(0xA3);
+
+		assertInvalidOpcode(0xB3);
+
+		assertInvalidOpcode(0xC3);
 		assertInvalidOpcode(0xC7);
+		assertInvalidOpcode(0xCC);
 		assertInvalidOpcode(0xCD);
 		assertInvalidOpcode(0xCF);
+
+		assertInvalidOpcode(0xD3);
+		assertInvalidOpcode(0xDC);
+		assertInvalidOpcode(0xDD);
+
+		assertInvalidOpcode(0xE3);
+		assertInvalidOpcode(0xEC);
+		assertInvalidOpcode(0xED);
+
+		assertInvalidOpcode(0xF3);
+		assertInvalidOpcode(0xFC);
+		assertInvalidOpcode(0xFD);
 	}
 }

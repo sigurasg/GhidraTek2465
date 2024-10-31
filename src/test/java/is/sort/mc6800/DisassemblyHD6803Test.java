@@ -16,9 +16,43 @@ package is.sort.mc6800;
 
 import org.junit.jupiter.api.Test;
 
-public class Disassembly6800Test extends DisassemblyCommonTest {
-	public Disassembly6800Test() {
-		super("MC6800:BE:16:default");
+public class DisassemblyHD6803Test extends DisassemblyMC6801CommonTest {
+	public DisassemblyHD6803Test() {
+		super("HD6803:BE:16:default");
+	}
+
+	@Test
+	public void AIM() {
+		test(0x71, "AIM #0x12,0x0034", 0x12, 0x34);
+		test(0x61, "AIM #0x12,0x34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void OIM() {
+		test(0x72, "OIM #0x12,0x0034", 0x12, 0x34);
+		test(0x62, "OIM #0x12,0x34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void EIM() {
+		test(0x75, "EIM #0x12,0x0034", 0x12, 0x34);
+		test(0x65, "EIM #0x12,0x34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void TIM() {
+		test(0x7B, "TIM #0x12,0x0034", 0x12, 0x34);
+		test(0x6B, "TIM #0x12,0x34,X", 0x12, 0x34);
+	}
+
+	@Test
+	public void XGDX() {
+		test(0x18, "XGDX");
+	}
+
+	@Test
+	public void SLP() {
+		test(0x1A, "SLP");
 	}
 
 	@Test
@@ -26,27 +60,16 @@ public class Disassembly6800Test extends DisassemblyCommonTest {
 		assertInvalidOpcode(0x00);
 		assertInvalidOpcode(0x02);
 		assertInvalidOpcode(0x03);
-		assertInvalidOpcode(0x04);
-		assertInvalidOpcode(0x05);
 
 		assertInvalidOpcode(0x12);
 		assertInvalidOpcode(0x13);
 		assertInvalidOpcode(0x14);
 		assertInvalidOpcode(0x15);
-		assertInvalidOpcode(0x18);
 
-		assertInvalidOpcode(0x1A);
 		assertInvalidOpcode(0x1C);
 		assertInvalidOpcode(0x1D);
 		assertInvalidOpcode(0x14);
 		assertInvalidOpcode(0x1F);
-
-		assertInvalidOpcode(0x21);
-
-		assertInvalidOpcode(0x38);
-		assertInvalidOpcode(0x3A);
-		assertInvalidOpcode(0x3C);
-		assertInvalidOpcode(0x3D);
 
 		assertInvalidOpcode(0x41);
 		assertInvalidOpcode(0x42);
@@ -60,43 +83,11 @@ public class Disassembly6800Test extends DisassemblyCommonTest {
 		assertInvalidOpcode(0x5B);
 		assertInvalidOpcode(0x5E);
 
-		assertInvalidOpcode(0x61);
-		assertInvalidOpcode(0x62);
-		assertInvalidOpcode(0x65);
-		assertInvalidOpcode(0x6B);
-
-		assertInvalidOpcode(0x71);
-		assertInvalidOpcode(0x72);
-		assertInvalidOpcode(0x75);
-		assertInvalidOpcode(0x7B);
-
-		assertInvalidOpcode(0x83);
 		assertInvalidOpcode(0x87);
 		assertInvalidOpcode(0x8F);
 
-		assertInvalidOpcode(0x93);
-		assertInvalidOpcode(0x9D);
-
-		assertInvalidOpcode(0xA3);
-
-		assertInvalidOpcode(0xB3);
-
-		assertInvalidOpcode(0xC3);
 		assertInvalidOpcode(0xC7);
-		assertInvalidOpcode(0xCC);
 		assertInvalidOpcode(0xCD);
 		assertInvalidOpcode(0xCF);
-
-		assertInvalidOpcode(0xD3);
-		assertInvalidOpcode(0xDC);
-		assertInvalidOpcode(0xDD);
-
-		assertInvalidOpcode(0xE3);
-		assertInvalidOpcode(0xEC);
-		assertInvalidOpcode(0xED);
-
-		assertInvalidOpcode(0xF3);
-		assertInvalidOpcode(0xFC);
-		assertInvalidOpcode(0xFD);
 	}
 }
