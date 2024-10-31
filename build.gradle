@@ -67,7 +67,7 @@ task compileSleigh(type: JavaExec) {
     FileCollection slaFiles = files(
         'data/languages/mc6800.sla',
         'data/languages/mc6801.sla',
-        'data/languages/hd6803.sla')
+        'data/languages/hd6301.sla')
 
     inputs.files(fileTree('data/languages').include('*.slaspec', '*.sinc'))
         .withPropertyName('sourceFiles')
