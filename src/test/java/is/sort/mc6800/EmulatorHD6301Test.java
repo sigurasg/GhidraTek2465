@@ -18,9 +18,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.Test;
 
-public class EmulatorHD6803Test extends AbstractEmulatorTest {
-	public EmulatorHD6803Test() {
-		super("HD6803:BE:16:default");
+public class EmulatorHD6301Test extends AbstractEmulatorTest {
+	public EmulatorHD6301Test() {
+		super("HD6301:BE:16:default");
 	}
 
 	@Test

@@ -44,14 +44,14 @@
     <compiler name="default" spec="mc6800.cspec" id="default"/>
     <external_name tool="IDA-PRO" name="MC6801"/>
   </language>
-  <language processor="HD6803"
+  <language processor="HD6301"
             endian="big"
             size="16"
             variant="default"
             version="1.0"
-            slafile="hd6803.sla"
+            slafile="hd6301.sla"
             processorspec="mc6801.pspec"
-            id="HD6803:BE:16:default">
+            id="HD6301:BE:16:default">
     <description>MC6801 Microprocessor</description>
     <compiler name="default" spec="mc6800.cspec" id="default"/>
   </language>
