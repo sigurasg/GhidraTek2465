@@ -23,7 +23,7 @@ public class DisassemblyHD6803Test extends Disassembly6801CommonTest {
 
 	@Test
 	public void AIM() {
-		test(0x71, "AIM #0x12,0x0034", 0x71, 0x71);
+		test(0x71, "AIM #0x12,0x0034", 0x12, 0x34);
 		test(0x61, "AIM #0x12,0x34,X", 0x12, 0x34);
 	}
 
@@ -82,16 +82,6 @@ public class DisassemblyHD6803Test extends Disassembly6801CommonTest {
 		assertInvalidOpcode(0x55);
 		assertInvalidOpcode(0x5B);
 		assertInvalidOpcode(0x5E);
-
-		assertInvalidOpcode(0x61);
-		assertInvalidOpcode(0x62);
-		assertInvalidOpcode(0x65);
-		assertInvalidOpcode(0x6B);
-
-		assertInvalidOpcode(0x71);
-		assertInvalidOpcode(0x72);
-		assertInvalidOpcode(0x75);
-		assertInvalidOpcode(0x7B);
 
 		assertInvalidOpcode(0x87);
 		assertInvalidOpcode(0x8F);
