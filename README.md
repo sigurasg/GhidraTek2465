@@ -6,7 +6,19 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
 
 ## Features
 
-* MC6800 and MC6801 language specs for Sleigh.
+* Contains language specs for Motorola MC6800 and related MPUs.
+
+  Note that if you only want to disassemble and decompile any of the supported
+  instruction sets, you can ignore the features below.
+  The loader and analyzer will be inert unless the loaded ROMs have the Tek
+  headers and valid checksums.
+
+  The supported instruction sets include:
+  
+  - Motorola MC6800, which also covers Motorola MC6802 and MC6808.
+  - Motorola MC6801, which also covers Motorola MC6803 as well as Hitachi HD6803.
+  - Hitachi HD6801, which also covers Hitachi HD6803.
+
 * ROM loader for the 2465 series.
   - The original 2465.
   - The 2465A/2467.
