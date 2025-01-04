@@ -2,17 +2,17 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/java
 {
 	"name": "Java",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
+	// More info: https://containers.dev/guide/dockerfile
 	"dockerFile": "Dockerfile",
 
 	"customizations": {
 		// Configure properties specific to VS Code.
 		"vscode": {
 			// Set *default* container specific settings.json values on container create.
-			"settings": {},
-			"extensions": [
-				"vscjava.vscode-java-pack",
-				"ms-azuretools.vscode-docker"],
+			"settings": {
+				"java.import.gradle.java.home": "/usr/lib/jvm/java-21-openjdk-amd64/"
+			},
+			"extensions": ["vscjava.vscode-java-pack"]
 		}
 	}
 
