@@ -62,6 +62,8 @@ public class DataTypes {
 					port1.addBitField(U8, 1, "pwr_down", null);
 					port1.addBitField(U8, 1, "pgsel2", null);
 					break;
+				case UNKNOWN:
+					break;
 			}
 		}
 		catch (InvalidDataTypeException e) {
@@ -89,6 +91,8 @@ public class DataTypes {
 					port2.addBitField(U8, 1, "u2601_inh", null);
 					port2.addBitField(U8, 1, "u2401_inh", null);
 					port2.addBitField(U8, 1, "trig_led", null);
+					break;
+				case UNKNOWN:
 					break;
 			}
 		}
@@ -120,6 +124,8 @@ public class DataTypes {
 					port3.addBitField(U8, 1, "mux_out", null);
 					port3.addBitField(U8, 1, "beam_find", null);
 					port3.addBitField(U8, 1, "65_67_id", null);
+					break;
+				case UNKNOWN:
 					break;
 			}
 		}
