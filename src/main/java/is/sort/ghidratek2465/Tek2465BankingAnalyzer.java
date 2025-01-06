@@ -197,12 +197,10 @@ public class Tek2465BankingAnalyzer extends AbstractAnalyzer {
 		AddressSet functionsToCreate = new AddressSet();
 		for (var ref : referenceManager.getReferencesTo(f.getEntryPoint())) {
 			if (ref.getReferenceType().isCall()) {
-				int thunkLength = 8; // Two JSR and a JMP in 2465As.
 				Address callAddress = ref.getFromAddress();
 				if (scopeKind != ScopeKind.TEK2465A) {
 					// The banking thunks in the early and late Bs start with a DES instruction.
 					callAddress = callAddress.subtract(1);
-					thunkLength += 1;
 				}
 
 				// Try the easy way first.

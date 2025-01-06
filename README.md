@@ -14,7 +14,7 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
   headers and valid checksums.
 
   The supported instruction sets include:
-  
+
   - Motorola MC6800, which also covers Motorola MC6802 and MC6808.
   - Motorola MC6801, which also covers Motorola MC6803 as well as Hitachi HD6803.
   - Hitachi HD6801, which also covers Hitachi HD6803.
@@ -29,17 +29,17 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
   This aids analysis as it makes it easy to track down users of different registers
   using the cross-reference tables Ghidra builds.
   Also note that different scope versions have different IO register layouts.
-  
+
 * Creates typed symbols for the ROM headers
 * Tags the code pointed to by the vector table as functions for analysis.
 
   This gives the auto analysis a starting points for disassembly and function discovery.
-  
+
 * Analyzes banking thunks.
 
   This propagates the disassembly across banks, which allows even more code discovery
   in auto analysis.
-  
+
 * Sets the destination of a banking thunk to the service function.
 
   This aids analysis as when the decompiler encounters a thunk, it displays

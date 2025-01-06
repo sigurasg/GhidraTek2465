@@ -352,7 +352,6 @@ public class Tek2465Loader extends AbstractProgramLoader {
 			return null;
 		}
 		ROMHeader header = new ROMHeader(provider, headerOffsets[0]);
-		int partNumber = header.partNumber;
 		return header;
 	}
 
@@ -389,7 +388,11 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				blk =
 					memory.createUninitializedBlock("RAM HI", as.getAddress(0x8000), 0x2000, false);
 				blk.setPermissions(true, true, true);
-		}
+				break;
+
+			case UNKNOWN:
+				throw new InvalidInputException("Unknown scope type.");
+			}
 
 		// Create the options space.
 		blk = null;

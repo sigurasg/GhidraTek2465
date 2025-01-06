@@ -195,10 +195,14 @@ public class ROMUtilsTest {
 			getHeader(0xe330, 0x3456, 0x1, ~0x1, 0x80, 0x4675, 0xFFFF, 0x0000, 0x00FF));
 	}
 
+	/*
+	 * Unused for now as the tail header is not checked.
+	 *
 	private ByteArrayProvider getIncorrectTailChecksumRom() {
 		return getBytesWithHeader(0x8000,
 			getHeader(0x6ebc, 0x3456, 0x1, ~0x1, 0x80, 0x1234, 0xFFFF, 0x0000, 0x00FF));
 	}
+	 */
 
 	private ByteArrayProvider getCorrectChecksumRom() {
 		return getBytesWithHeader(0x8000,

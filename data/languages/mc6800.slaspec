@@ -913,7 +913,7 @@ macro PushEntireState()
 @ifdef MC6801
     compare(X, OP2);
 @else
-    # Can't use the compare macro here because there is no carry.    
+    # Can't use the compare macro here because there is no carry.
     $(V) = sborrow(X, OP2);
     local tmp = X - OP2;
     setNZFlags(tmp);
