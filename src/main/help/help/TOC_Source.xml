@@ -49,9 +49,7 @@
 
 
 <tocroot>
-	<!--
 	<tocref id="Ghidra Functionality">
 		<tocdef id="HelpAnchor" text="Tek2465 Loader" target="help/topics/tek2465/help.html" />
 	</tocref>
-	-->
 </tocroot>
