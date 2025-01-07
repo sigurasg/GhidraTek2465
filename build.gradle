@@ -113,6 +113,7 @@ tasks.withType(JavaCompile) {
 buildExtension {
     exclude 'data/**'
     exclude '.vscode/**'
+    exclude '.devcontainer/**'
     exclude 'gradle.properties'
     exclude '.github/**'
     exclude 'gradle/**'
