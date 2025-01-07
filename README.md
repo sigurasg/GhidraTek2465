@@ -1,7 +1,7 @@
 # GhidraTek2465
 
 A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
-Requires a lSleigh anguage spec for the MC6800, like e.g. the one
+Requires a Sleigh language spec for the MC6800, like e.g. the one
 [available here](https://github.com/sigurasg/GhidraMC6800/releases).
 
 ![Disassembly](screenshot.png)
