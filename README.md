@@ -1,25 +1,14 @@
 # GhidraTek2465
 
 A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
+Requires a Sleigh language spec for the MC6800, like e.g. the one
+[available here](https://github.com/sigurasg/GhidraMC6800/releases).
 
 ![Disassembly](screenshot.png)
 
 ## Features
 
-* Contains language specs for Motorola MC6800 and related MPUs.
-
-  Note that if you only want to disassemble and decompile any of the supported
-  instruction sets, you can ignore the features below.
-  The loader and analyzer will be inert unless the loaded ROMs have the Tek
-  headers and valid checksums.
-
-  The supported instruction sets include:
-
-  - Motorola MC6800, which also covers Motorola MC6802 and MC6808.
-  - Motorola MC6801, which also covers Motorola MC6803 as well as Hitachi HD6803.
-  - Hitachi HD6801, which also covers Hitachi HD6803.
-
-* ROM loader for the 2465 series.
+* Contains a ROM loader for the 2465 series, including:
   - The original 2465.
   - The 2465A/2467.
   - The 2465B/2467B early models with through-hole A5 board.
@@ -30,7 +19,7 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
   using the cross-reference tables Ghidra builds.
   Also note that different scope versions have different IO register layouts.
 
-* Creates typed symbols for the ROM headers
+* Creates typed symbols for the ROM headers.
 * Tags the code pointed to by the vector table as functions for analysis.
 
   This gives the auto analysis a starting points for disassembly and function discovery.
@@ -61,6 +50,17 @@ A Ghidra extension for the venerable Tektronix 2465-series oscilloscopes.
 1. Restart Ghidra when prompted to load the extension properly
 
 ## How to build
+
+### With VS Code and Docker
+
+Open the directory in a VS Code instance and then reopen it in a devcontainer.
+
+In a new terminal window type
+```
+./gradlew
+```
+
+### Otherwise
 
 As a prerequisite, you need to have a Ghidra installation somewhere (an actual
 installation, not a copy of Ghidra source code!).
