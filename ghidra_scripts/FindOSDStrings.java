@@ -67,7 +67,7 @@ public class FindOSDStrings extends GhidraScript {
 				continue;
 			}
 
-			// We have an LDX/STX sequence, make sure it's an immeediate 16
+			// We have an LDX/STX sequence, make sure it's an immediate 16
 			// bit load.
 			Object[] opObjects = ldx.getOpObjects(0);
 			if (opObjects.length != 1 ||  !(opObjects[0] instanceof Scalar)) {
@@ -98,6 +98,9 @@ public class FindOSDStrings extends GhidraScript {
 			// Create a bookmark for the string.
 			createBookmark(stringStart, "OSD_STRING", osdString);
 
+			// Create a label for the string.
+			createLabel(stringStart, makeLabelFromOSDString(osdString), true);
+			
 			// Create a reference from the first operand of the LDX instruction
 			// to the string. Start by removing any pre-existing reference.
 			ldx.removeOperandReference(0, stringStart);
@@ -131,6 +134,40 @@ public class FindOSDStrings extends GhidraScript {
 		}
 
 		return data;
+	}
+
+	/**
+	 * Creates a label from an OSD string by replacing runs of non-ASCII characters
+	 * with a single underscore and uppercasing all ASCII characters.
+	 */
+	private static String makeLabelFromOSDString(String osdString) {
+		StringBuilder label = new StringBuilder("OSD_STRING_");
+		// Make sure an initial non-alphanumeric doesn't cause double
+		// underscores.
+		boolean inNonAlphaNumeric = true;
+		for (int i = 0; i < osdString.length(); i++) {
+			char c = osdString.charAt(i);
+
+			if (Character.isLetterOrDigit(c)) { // ASCII printable
+				if (inNonAlphaNumeric) {
+					inNonAlphaNumeric = false;
+				}
+				label.append(Character.toUpperCase(c));
+			} else if (c == '/') {
+				// Ignore slash, which denotes a "large" character.			
+			} else {
+				if (!inNonAlphaNumeric) {
+					label.append('_');
+					inNonAlphaNumeric = true;
+				}
+			}
+		}
+		String result = label.toString();
+		// Remove trailing underscores
+		while (result.endsWith("_")) {
+			result = result.substring(0, result.length() - 1);
+		}
+		return result;
 	}
 
 	private final long osdStringPointerOffset = 0x7A;
