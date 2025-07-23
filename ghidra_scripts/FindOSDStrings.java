@@ -143,29 +143,26 @@ public class FindOSDStrings extends GhidraScript {
 	 */
 	private static String makeLabelFromOSDString(String osdString) {
 		StringBuilder label = new StringBuilder("OSD_STRING_");
-		// Make sure an initial non-alphanumeric doesn't cause double
-		// underscores.
+		// Starting with an underscre, so not in alphanumerics.
 		boolean inNonAlphaNumeric = true;
 		for (int i = 0; i < osdString.length(); i++) {
 			char c = osdString.charAt(i);
-
-			if (Character.isLetterOrDigit(c)) { // ASCII printable
-				if (inNonAlphaNumeric) {
-					inNonAlphaNumeric = false;
-				}
+			if (Character.isLetterOrDigit(c)) { // alphanumeric
+				inNonAlphaNumeric = false;
 				label.append(Character.toUpperCase(c));
 			} else if (c == '/') {
 				// Ignore slash, which denotes a "large" character.			
 			} else {
 				if (!inNonAlphaNumeric) {
 					label.append('_');
-					inNonAlphaNumeric = true;
 				}
+				inNonAlphaNumeric = true;
 			}
 		}
+
 		String result = label.toString();
-		// Remove trailing underscores
-		while (result.endsWith("_")) {
+		// Remove trailing underscore.
+		if (result.endsWith("_")) {
 			result = result.substring(0, result.length() - 1);
 		}
 		return result;
