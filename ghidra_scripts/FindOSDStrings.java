@@ -137,8 +137,9 @@ public class FindOSDStrings extends GhidraScript {
 	}
 
 	/**
-	 * Creates a label from an OSD string by replacing runs of non-ASCII characters
-	 * with a single underscore and uppercasing all ASCII characters.
+	 * Creates a label from an OSD string by replacing runs of non-alphanumeric
+	 * characters with a single underscore while ignoring '/' and uppercasing all
+	 * alpabetical characters.
 	 */
 	private static String makeLabelFromOSDString(String osdString) {
 		StringBuilder label = new StringBuilder("OSD_STRING_");
