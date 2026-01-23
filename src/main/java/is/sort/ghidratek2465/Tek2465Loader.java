@@ -28,9 +28,9 @@ import ghidra.app.util.importer.MessageLog;
 import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.app.util.opinion.Loaded;
+import ghidra.app.util.opinion.Loader;
 import ghidra.app.util.opinion.LoaderTier;
 import ghidra.framework.model.DomainObject;
-import ghidra.framework.model.Project;
 import ghidra.framework.store.LockException;
 import ghidra.program.database.mem.FileBytes;
 import ghidra.program.model.address.Address;
@@ -103,9 +103,10 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 	@Override
 	public List<Option> getDefaultOptions(ByteProvider provider, LoadSpec loadSpec,
-			DomainObject domainObject, boolean isLoadIntoProgram) {
+			DomainObject domainObject, boolean isLoadIntoProgram, boolean mirrorFsLayout) {
 		List<Option> list =
-			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram);
+			super.getDefaultOptions(provider, loadSpec, domainObject, isLoadIntoProgram,
+				mirrorFsLayout);
 
 		ScopeKind scopeKind = ScopeKind.UNKNOWN;
 		try {
@@ -127,22 +128,19 @@ public class Tek2465Loader extends AbstractProgramLoader {
 	}
 
 	@Override
-	protected List<Loaded<Program>> loadProgram(ByteProvider provider, String loadedName,
-			Project project, String projectFolderPath, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Object consumer, TaskMonitor monitor)
+	protected List<Loaded<Program>> loadProgram(Loader.ImporterSettings settings)
 			throws IOException, CancelledException {
 		var result = new ArrayList<Loaded<Program>>();
-		var pair = loadSpec.getLanguageCompilerSpec();
+		var pair = settings.loadSpec().getLanguageCompilerSpec();
 		var language = getLanguageService().getLanguage(pair.languageID);
-		var compiler = language.getCompilerSpecByID(pair.compilerSpecID);
-
 		var baseAddress = language.getAddressFactory().getDefaultAddressSpace().getAddress(0);
-		var program = createProgram(provider, loadedName, baseAddress, getName(), language,
-			compiler, consumer);
+		var program = createProgram(baseAddress, settings);
 		var success = false;
-		ScopeKind scopeKind = OptionUtils.getOption(OPTION_SCOPE_KIND, options, ScopeKind.UNKNOWN);
-		boolean addTypes = OptionUtils.getOption(OPTION_ADD_TYPES, options, true);
-		boolean addMemoryBlocks = OptionUtils.getOption(OPTION_ADD_MEMORY_BLOCKS, options, true);
+		ScopeKind scopeKind =
+			OptionUtils.getOption(OPTION_SCOPE_KIND, settings.options(), ScopeKind.UNKNOWN);
+		boolean addTypes = OptionUtils.getOption(OPTION_ADD_TYPES, settings.options(), true);
+		boolean addMemoryBlocks =
+			OptionUtils.getOption(OPTION_ADD_MEMORY_BLOCKS, settings.options(), true);
 		try {
 			DataTypes dataTypes = null;
 			if (addTypes) {
@@ -165,27 +163,26 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				}
 			}
 
-			createDefaultMemoryBlocks(program, language, log);
+			createDefaultMemoryBlocks(program, settings);
 
-			loadInto(provider, loadSpec, options, log, program, monitor);
+			loadInto(program, settings);
 
-			success = result.add(new Loaded<>(program, loadedName, projectFolderPath));
+			success = result.add(new Loaded<>(program, settings));
 		}
 		catch (LockException | MemoryConflictException | AddressOverflowException
 				| CodeUnitInsertionException | InvalidInputException e) {
-			log.appendException(e);
+			settings.log().appendException(e);
 		}
 		finally {
 			if (!success) {
-				program.release(consumer);
+				program.release(settings.consumer());
 			}
 		}
 		return result;
 	}
 
 	@Override
-	protected void loadProgramInto(ByteProvider provider, LoadSpec loadSpec, List<Option> options,
-			MessageLog log, Program program, TaskMonitor monitor)
+	protected void loadProgramInto(Program program, Loader.ImporterSettings settings)
 			throws IOException, CancelledException {
 
 		var as = program.getAddressFactory().getDefaultAddressSpace();
@@ -193,8 +190,9 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 		// Back the memory blocks with FileBytes as there are cases where the full
 		// contents of the binary are needed.
+		ByteProvider provider = settings.provider();
 		FileBytes fileBytes = memory.createFileBytes(provider.getName(), 0, provider.length(),
-			provider.getInputStream(0), monitor);
+			provider.getInputStream(0), settings.monitor());
 
 		try {
 			int[] headerOffsets = ROMUtils.findValidRomHeaders(provider);
@@ -231,13 +229,14 @@ public class Tek2465Loader extends AbstractProgramLoader {
 				// together from otherwise occluded segments of two ROMs.
 				List<FileBytes> allFileBytes = memory.getAllFileBytes();
 				if (allFileBytes.size() == 2) {
-					maybeCreateStitchedMemoryBlock(program, knownFunctions, allFileBytes, log,
-						monitor);
+					maybeCreateStitchedMemoryBlock(program, knownFunctions, allFileBytes,
+						settings.log(),
+						settings.monitor());
 				}
 			}
 		}
 		catch (Exception e) {
-			log.appendException(e);
+			settings.log().appendException(e);
 			throw new CancelledException("Loading failed: " + e.getMessage());
 		}
 	}
@@ -392,7 +391,7 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 			case UNKNOWN:
 				throw new InvalidInputException("Unknown scope type.");
-			}
+		}
 
 		// Create the options space.
 		blk = null;
