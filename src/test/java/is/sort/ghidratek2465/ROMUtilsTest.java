@@ -34,6 +34,8 @@ public class ROMUtilsTest {
 		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1626), ScopeKind.TEK2465);
 		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1627), ScopeKind.TEK2465);
 		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1628), ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1994), ScopeKind.TEK2465);
+		assertEquals(ROMUtils.scopeKindFromPartNumber(0x1995), ScopeKind.TEK2465);
 
 		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3302), ScopeKind.TEK2465A);
 		assertEquals(ROMUtils.scopeKindFromPartNumber(0x3303), ScopeKind.TEK2465A);
