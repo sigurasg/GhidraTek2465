@@ -46,6 +46,8 @@ public class ROMUtils {
 			case 0x1626:
 			case 0x1627:
 			case 0x1628:
+			case 0x1994:
+			case 0x1995:
 				return ScopeKind.TEK2465;
 
 			case 0x3302:
@@ -76,6 +78,10 @@ public class ROMUtils {
 				return "U2362";
 			case 0x1628:
 				return "U2162";
+			case 0x1994:
+				return "U2162";
+			case 0x1995:
+				return "U2378";
 
 			case 0x3302:
 				return "U2160";
