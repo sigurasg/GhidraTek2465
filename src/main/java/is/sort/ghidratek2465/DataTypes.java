@@ -133,6 +133,29 @@ public class DataTypes {
 			e.printStackTrace();
 		}
 
+		StructureDataType port4 = new StructureDataType(PATH, "p4", 0);
+		port4.setPackingEnabled(true);
+		try {
+			switch (scopeKind) {
+				case TEK2465B:
+				case TEK2465B_LATE:
+					port4.addBitField(U8, 1, "col0", null);
+					port4.addBitField(U8, 1, "col1", null);
+					port4.addBitField(U8, 1, "col2", null);
+					port4.addBitField(U8, 1, "col3", null);
+					port4.addBitField(U8, 1, "col4", null);
+					port4.addBitField(U8, 1, "si", null);
+					port4.addBitField(U8, 1, "cal", null);
+					port4.addBitField(U8, 1, "no_cal", null);
+					break;
+				case UNKNOWN:
+					break;
+			}
+		}
+		catch (InvalidDataTypeException e) {
+			e.printStackTrace();
+		}
+
 		boolean is2465 = scopeKind == ScopeKind.TEK2465;
 		switch (scopeKind) {
 			case TEK2465:
@@ -194,7 +217,7 @@ public class DataTypes {
 				fine.add(U8, "trig_stat_strb", null);
 
 				var coarse = new StructureDataType(PATH, "c", 0);
-				coarse.add(array(U8, 16), "port_4_clk", null);
+				coarse.add(array(port4, 16), "port_4_clk", null);
 				coarse.add(array(U8, 16), "led_clk", null);
 				coarse.add(array(U8, 16), "ext_fp_clk", null);
 				coarse.add(array(U8, 16), "dmux0_on", null);
