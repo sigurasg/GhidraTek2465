@@ -25,7 +25,6 @@ import ghidra.app.util.OptionUtils;
 import ghidra.app.util.bin.ByteArrayProvider;
 import ghidra.app.util.bin.ByteProvider;
 import ghidra.app.util.importer.MessageLog;
-import ghidra.app.util.importer.options.BooleanOption;
 import ghidra.app.util.opinion.AbstractProgramLoader;
 import ghidra.app.util.opinion.LoadSpec;
 import ghidra.app.util.opinion.Loaded;
@@ -119,10 +118,10 @@ public class Tek2465Loader extends AbstractProgramLoader {
 		catch (IOException e) {
 		}
 
-		list.add(new ScopeKindOption(ANCHOR_LABELS_OPTION_NAME, scopeKind));
+		list.add(new ScopeKindOption(OPTION_SCOPE_KIND, scopeKind));
 		if (!isLoadIntoProgram) {
-			list.add(new BooleanOption.Builder(OPTION_ADD_TYPES).value(true).build());
-			list.add(new BooleanOption.Builder(OPTION_ADD_MEMORY_BLOCKS).value(true).build());
+			list.add(Option.newBoolean(OPTION_ADD_TYPES).value(true).build());
+			list.add(Option.newBoolean(OPTION_ADD_MEMORY_BLOCKS).value(true).build());
 		}
 
 		return list;
