@@ -120,8 +120,8 @@ public class Tek2465Loader extends AbstractProgramLoader {
 
 		list.add(new ScopeKindOption(OPTION_SCOPE_KIND, scopeKind));
 		if (!isLoadIntoProgram) {
-			list.add(new Option(OPTION_ADD_TYPES, true));
-			list.add(new Option(OPTION_ADD_MEMORY_BLOCKS, true));
+			list.add(Option.newBoolean(OPTION_ADD_TYPES).value(true).build());
+			list.add(Option.newBoolean(OPTION_ADD_MEMORY_BLOCKS).value(true).build());
 		}
 
 		return list;

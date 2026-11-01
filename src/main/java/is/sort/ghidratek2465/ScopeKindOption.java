@@ -19,33 +19,18 @@ import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JPanel;
 
+import ghidra.app.util.AddressFactoryService;
 import ghidra.app.util.Option;
 
 class ScopeKindOption extends Option {
 	private final Component customEditor = createCustomEditor(this);
 
 	public ScopeKindOption(String name, ScopeKind value) {
-		super(name, ScopeKind.class, value, null, null);
-	}
-
-	public ScopeKindOption(String group, String name, ScopeKind value) {
-		super(name, ScopeKind.class, value, null, group);
-	}
-
-	public ScopeKindOption(String name) {
-		super(name, ScopeKind.class, null, null, null);
-	}
-
-	public ScopeKindOption(String name, ScopeKind value, String arg) {
-		super(name, ScopeKind.class, value, arg, null);
-	}
-
-	public ScopeKindOption(String name, ScopeKind value, String arg, String group) {
-		super(name, ScopeKind.class, value, arg, group);
+		super(name, ScopeKind.class, value, null, null, null, false, "Scope Kind");
 	}
 
 	@Override
-	public Component getCustomEditorComponent() {
+	public Component getCustomEditorComponent(AddressFactoryService addressFactoryService) {
 		return this.customEditor;
 	}
 
@@ -67,9 +52,8 @@ class ScopeKindOption extends Option {
 	}
 
 	@Override
-	public Option copy() {
-		return new ScopeKindOption(this.getName(), (ScopeKind) this.getValue(), this.getArg(),
-			this.getGroup());
+	public ScopeKindOption copy() {
+		return new ScopeKindOption(getName(), (ScopeKind) getValue());
 	}
 
 }
